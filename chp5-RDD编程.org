@@ -1,0 +1,566 @@
+# -*- org-export-babel-evaluate: nil -*-
+#+PROPERTY: header-args :eval never-export
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="/home/yiddi/git_repos/YIDDI_org_export_theme/theme/org-nav-theme_cache.css" >
+#+OPTIONS: html-link-use-abs-url:nil html-postamble:t html-preamble:t
+#+OPTIONS: H:3 num:nil ^:nil _:nil tags:not-in-toc
+#+TITLE: RDD编程
+#+AUTHOR: yiddishkop
+#+EMAIL: yiddishkop@163.com
+
+#+BEGIN_EXPORT html
+<nav id='navbar'>
+<div class='container'>
+<ul>
+<li><a href='https://yiddishkop.github.io/'>Home</a></li>
+<li><a href='#'>FP</a></li>
+<li><a href='#'>DataScience</a></li>
+<li><a href='#'>Spark</a></li>
+<li><a href='#'>CS</a></li>
+<li><a href='#'>论文撰写</a></li>
+<li><a href='#'>Life</a></li>
+<li><a href='https://yiddishkop.github.io/YIDDI_reme/resume_of_webpage_cn.html'>About</a></li>
+</ul>
+</div>
+</nav>
+#+END_EXPORT
+
+Spark 中有两大抽象: RDD 和 共享变量
+
+* RDD编程概述
+** RDD 创建
+*** 从文件系统加载数据创建RDD
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-14 22:49:06
+[[file:RDD编程概述/screenshot_2018-08-14_22-49-06.png]]
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-14 22:49:55
+[[file:RDD编程概述/screenshot_2018-08-14_22-49-55.png]]
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-14 22:49:17
+[[file:RDD编程概述/screenshot_2018-08-14_22-49-17.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-14 22:51:43
+[[file:RDD编程概述/screenshot_2018-08-14_22-51-43.png]]
+
+#+BEGIN_SRC shell
+  ls /usr
+#+END_SRC
+
+#+RESULTS:
+| bin     |
+| games   |
+| include |
+| lib     |
+| local   |
+| sbin    |
+| share   |
+| src     |
+
+*** 通过并行集合(数组)创建RDD
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-14 22:55:03
+[[file:RDD编程概述/screenshot_2018-08-14_22-55-03.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-14 22:56:57
+[[file:RDD编程概述/screenshot_2018-08-14_22-56-57.png]]
+
+
+
+** RDD 操作
+转换操作
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-14 22:58:19
+[[file:RDD编程概述/screenshot_2018-08-14_22-58-19.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-14 22:58:33
+[[file:RDD编程概述/screenshot_2018-08-14_22-58-33.png]]
+
+
+行动操作
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-14 23:03:02
+[[file:RDD编程概述/screenshot_2018-08-14_23-03-02.png]]
+
+
+惰性机制
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-14 23:04:40
+[[file:RDD编程概述/screenshot_2018-08-14_23-04-40.png]]
+
+实例
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-14 23:06:34
+[[file:RDD编程概述/screenshot_2018-08-14_23-06-34.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-14 23:07:18
+[[file:RDD编程概述/screenshot_2018-08-14_23-07-18.png]]
+
+
+** 持久化
+持久化的目标是什么, 为了解决 Spark 每次执行 "Action" 动作的时候都从 DAG 的头部开
+始一个 RDD 一个 RDD 的计算. 关键耗时的地方在于, 我每次执行 Action 都从头计算一遍
+DAG --- *中间结果没有被复用过* . *持久化就是为了解决 DAG 计算中间结果的复用问题
+*.
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-14 23:08:19
+[[file:RDD编程概述/screenshot_2018-08-14_23-08-19.png]]
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-14 23:10:58
+[[file:RDD编程概述/screenshot_2018-08-14_23-10-58.png]]
+
+
+使用 ~persist()~ 方法讲一个 RDD *标记为持久化* , 注意标记为持久化的意思是不会立
+即对调用 ~persist()~ 函数的RDD进行持久化, 而是在 *第一次* 遇到 *Action* 操作出发
+真正计算以后才会将其持久化. *第二次* 遇到 *Action* 时就会直接从缓存中读取该值.
+
+
+[[file:RDD编程概述/screenshot_2018-08-14_23-12-32.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-14 23:13:44
+[[file:RDD编程概述/screenshot_2018-08-14_23-13-44.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-14 23:14:20
+[[file:RDD编程概述/screenshot_2018-08-14_23-14-20.png]]
+
+
+
+
+** 分区
+不做分区也没什么问题, 但是一旦你对 *性能* 有严格要求时, 必然需要 *分区* .
+
+RDD 是弹性分布式数据集, 通常 RDD 都很大, 会被分成很多分区, 分别保存在不同的节点
+上.
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 07:55:40
+[[file:RDD编程概述/screenshot_2018-08-15_07-55-40.png]]
+
+
+如下所示, 这样划分分区的话, 相互之间的操作完全不用等待, 横向每条线都可以同时执行.
+
+
+[[file:RDD编程概述/screenshot_2018-08-15_07-57-06.png]]
+
+为什么可以减少通信开销. 如下右边图,显示的就是没有经过 *分区设计* 的情况下做 join
+操作时底层在做的事情. 可以看到 join by 学号的时候会产生过多的 *宽依赖*.
+
+~join~ ~group~ 都会从 *分区设计* 中获利.
+
+[[file:RDD编程概述/screenshot_2018-08-15_08-03-09.png]]
+
+
+[[file:RDD编程概述/screenshot_2018-08-15_08-08-23.png]]
+
+$|split| = |core|$
+
+为什么这样分,
+
+code => sc => DAG => DAG scheduler => stages => task => Task scheduler <<<<<  Executor
+
+
+[[file:RDD编程概述/screenshot_2018-08-15_08-12-25.png]]
+
+
+~spark.default.parallelism~ 来设置默认分区数.
+
+[[file:RDD编程概述/screenshot_2018-08-15_08-14-07.png]]
+
+当你人为的预见到原来的 RDD 经过一系列转换操作(filt, drop, etc)数据量越来越少, 就
+可以强行设置 RDD 的分区数量(设小一点, ~.repartition~ 一下)
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 08:17:10
+[[file:RDD编程概述/screenshot_2018-08-15_08-17-10.png]]
+
+
+[[file:RDD编程概述/screenshot_2018-08-15_08-17-44.png]]
+
+
+[[file:RDD编程概述/screenshot_2018-08-15_08-21-03.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 08:21:50
+[[file:RDD编程概述/screenshot_2018-08-15_08-21-50.png]]
+
+
+
+
+** 打印元素
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 08:29:52
+[[file:RDD编程概述/screenshot_2018-08-15_08-29-52.png]]
+
+
+* Pair RDD (键值对RDD)
+** pair RDD 的创建方式
+[[file:Pair RDD (键值对RDD)/screenshot_2018-08-15_08-31-53.png]]
+
+注意: 这里是一个词频统计的初始化程序, ~(word, occurance time)~
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 08:36:40
+[[file:Pair RDD (键值对RDD)/screenshot_2018-08-15_08-36-40.png]]
+
+* 共享变量
+** 共享变量的意义
+[[file:共享变量/screenshot_2018-08-15_08-38-03.png]]
+
+共享变量可以有效减少数据传输. 某些task需要使用相同的数据, 把共享变量作为只读数据,
+*并把他提前发送到 Executor* 里面去.
+
+** 广播变量 broadcast variables
+
+[[file:共享变量/screenshot_2018-08-15_08-44-06.png]]
+
+
+从普通变量 => 广播变量
+[[file:共享变量/screenshot_2018-08-15_08-45-19.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 09:00:36
+[[file:共享变量/screenshot_2018-08-15_09-00-36.png]]
+
+
+注意: 共享变量是指针对原始数据或原始数据的函数的某些公用变量(eg, 我有一个
+~num.txt~ 我需要对其中所有的数字都整体加 ~3~, 这个时候 ~3~ 就是 "*整体原始数据的
+函数的某些公共变量*", 我就可以将其设置为 *共享变量* ,这样不管有多少分片,都只维护
+一份
+
+
+
+
+** 累加器(全球累加) accumulators
+
+[[file:共享变量/screenshot_2018-08-15_09-03-07.png]]
+
+虽然代码上看不出来(~accum.value~), 但是系统运行的机制实在 Driver 上来读取累加器
+value 值的.
+
+
+[[file:共享变量/screenshot_2018-08-15_09-04-11.png]]
+
+
+注意: 共享变量是指针对原始数据或原始数据的函数的某些公用变量(eg. accumulat all
+values of ~val num_rdd = sc.textFile("number.txt")~, 就可以设置一个累加器被所有
+RDD分片共享, 比如这个number.txt有500G大小,他读进来之后会被分片到200台机器上, 我
+们可以设置一个同时被200台机器共同使用的变量 ~val accum = sc.longAccumulatro("my
+accumulator")~, 而在使用的时候你不需要关系具体的分片, 而是使用RDD整体调用即可,
+~num_rdd.foreach(x=>accum.add(x))~)
+
+
+* 数据读写
+
+** 本地文件系统数据读写
+~sc.textFile()~ and ~sc.saveAsTextFile()~
+
+[[file:数据读写/screenshot_2018-08-15_09-39-09.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 09:41:26
+[[file:数据读写/screenshot_2018-08-15_09-41-26.png]]
+
+这里注意, 当你执行 spark 写出到文件系统函数时 ~sc.saveAsTextFile("name.txt")~ 并
+*不会实际生成这样一个 ~name.txt~ 文件*, 而是生成了这样一个 *目录* 叫做
+~name.txt~ 其下存放的是类似下面这种形式的文档.
+#+BEGIN_EXAMPLE
+name.txt -- /
+            |- part-00000
+            |- part-00001
+            |- part-00002 // 与分区数(split)保持一致
+            |- _SUCCESS
+#+END_EXAMPLE
+
+当你想读取时, 直接读取目录 ~name.txt~ 即可, 不需要指明 ~part-00000~
+
+** HDFS数据读写
+~sc.textFile()~ and ~sc.saveAsTextFile()~
+
+#+BEGIN_EXAMPLE
+hdfs://localhost:9000/user/hadoop/word.txt
+                 ----
+                  ^ this is specified by config settings when you setup
+                    hdfs.
+#+END_EXAMPLE
+
+[[file:数据读写/screenshot_2018-08-15_09-48-17.png]]
+** JSON数据读写
+~sc.textFile()~ and ~sc.saveAsTextFile()~
+
+[[file:数据读写/screenshot_2018-08-15_09-51-45.png]]
+
+
+[[file:数据读写/screenshot_2018-08-15_09-52-33.png]]
+
+[[file:数据读写/screenshot_2018-08-15_09-53-18.png]]
+
+
+[[file:数据读写/screenshot_2018-08-15_09-55-48.png]]
+
+为什么要创建一个 ~val conf=new SparkConf().setAppName("JSONApp")~ 呢, 因为这样设
+置之后我们可以直接在spark 可视化网页管理界面中直接找到我们相关的应用.
+
+
+[[file:数据读写/screenshot_2018-08-15_10-04-16.png]]
+
+** HBase数据读写
+   HBase 是数据库; Hive 是数据仓库. 两者不同.
+*** HBase简介
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 13:01:28
+[[file:数据读写/screenshot_2018-08-15_13-01-28.png]]
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 13:00:03
+[[file:数据读写/screenshot_2018-08-15_13-00-03.png]]
+
+不了解 HBase 的 *数据模型* 的话, 编程很难进行, 他与传统关系型数据库的 *数据模型*
+差距非常大.
+
+[[file:数据读写/screenshot_2018-08-15_13-00-20.png]]
+
+#+BEGIN_QUOTE
+关键词: *列族(column family)* *时间戳* *单元格数据无类型* *四维[行健,列族,列限定
+符,时间戳]坐标定位* *单元格为单位插入*
+#+END_QUOTE
+
+[[file:数据读写/screenshot_2018-08-15_13-03-10.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 13:05:26
+[[file:数据读写/screenshot_2018-08-15_13-05-26.png]]
+
+
+HBase 以 *单元格为单位插入数据*; 关系型数据库以 *行* 为单位插入数据.
+
+为什么会有时间戳, 因为 HBase 是建构在 HDFS 基础上, HDFS 最大特点就是允许你 *一次
+写入/多次读取*, *一旦写入完成关闭文件就再也不能修改*. 也因此, 不可能随意修改, 只
+能以时间戳的形式保存每次修改后的完整内容.
+
+[[file:数据读写/screenshot_2018-08-15_13-06-07.png]]
+
+
+先水平切 by row key, 再竖直切 by column family, 这样切分之后每个方格内叫做一个 *
+分区*. 一个 *分区* 就是一个 *负载分发的基本单位*, 这个分区方这个机器, 那个分区方
+那个机器.
+
+[[file:数据读写/screenshot_2018-08-15_13-13-11.png]]
+
+
+
+*** 创建一个 HBase 表
+    安装参考
+    http://dblab.xmu.edu.cn/blog/install-hbase/
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 13:56:10
+[[file:数据读写/screenshot_2018-08-15_13-56-10.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 13:56:30
+[[file:数据读写/screenshot_2018-08-15_13-56-30.png]]
+
+*hbase shell*
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 13:57:24
+[[file:数据读写/screenshot_2018-08-15_13-57-24.png]]
+
+
+#+BEGIN_EXAMPLE
+rowKey    columnFamily
+----- -------------------------
+
+| id | name     | gender | age-|---> columnName
+|----+----------+--------+-----|
+|  1 | xueqian  | F      |  23 |
+|  2 | weiliang | M      |  24 |
+#+END_EXAMPLE
+
+
+创建步骤:
+1. 创建列族信息: ~create [tableName], [columnFamilyName]~
+2. 插入一个学生记录单元格: ~put [tableName], [rowKey], [columnFamilyName:columnName], [value]~
+
+
+*** 配置 Spark 并编写程序读取 HBase 表
+通过 Spark 读取 HBase 表需要做一些前置配置工作, 但是林子雨教授说, 国内没有一篇博
+客能让你顺利完成这个工作, 他摸索了3天才搞定.
+
+
+[[file:数据读写/screenshot_2018-08-15_14-05-53.png]]
+
+拷贝到 spark/jars 目录下.
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 14:06:53
+[[file:数据读写/screenshot_2018-08-15_14-06-53.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 14:07:15
+[[file:数据读写/screenshot_2018-08-15_14-07-15.png]]
+
+~stuRDD.cache()~ 这条语句很重要, 我们通过 ~newAPIHadoopRDD~ 读取信息的这个 RDD,
+我们不希望他被重复执行, 所以要 ~cache()~ 留待后用.
+
+~stuRDD.foreach({ case (_, result)})~ 这条语句很重要, 我们读取 HBase 表
+"student" 到 Spark 中得到的 RDD 的数据模式是以二元组: ~(前面的这个用不到, 后面的
+这个有用)~ 为单位的数据组织(同理, 从文本文件读取到的RDD是以行,也就是String为单位
+的数据组织). 所以才声明为 ~case (_, result)~ 这种形式.
+
+~val key ...~ 这一系列语句很重要, 注意HBase表中的单元格存储的值都是 *无类型的*, 换言之
+都是以 ~Bytes~ 类型格式存储的:
+#+BEGIN_EXAMPLE
+  rowKey    columnFamily: info     -----> 转换为Bytes数据 ---+
+  ----- -------------------------                            |
+                                                             |
+                              +---------> 转换为Bytes数据 ---|------------------+
+                              |                              |                  |
+....................................                         |                  |
+.                             |    .                         |                  |
+. | id | name     | gender | age | .                         |                  |
+. |----+----------+--------+-----| .                         |                  |
+. |  1 | xueqian  | F      |  23 | .                         |                  |
+. |  2 | weiliang | M      |  24 | .                         |                  |
+....................................                         |                  |
+                              |                              |                  |
+                              |                              |                  |
+                              | RDD.foreach                  |                  |
+                              |                              |                  |
+                              |                              |                  |
+....................................                         |                  |
+. |  2 | weiliang | M      |  24 | .                         |                  |
+....................................                         |                  |
+                              |                              |                  |
+                              |                              |                  |
+                              |                              |                  |
+                              |                              |                  |
+                              v                              v                  v
+                              ------              ---------------      -----------------
+  val age    = Bytes.toString(result.getValue(    "info".getBytes,     "age"   .getBytes))
+                     -------- ------ --------     ---------------      -----------------
+                        |       |        |        定位到列族名(bytes)  定位到列名(bytes)
+                        |       |        |
+                        |       |        |
+                        |       |    取单元格值(bytes)
+                        |       |
+                        |    one row
+                        |
+                        |
+              单元格值转换(bytes -> String)
+
+#+END_EXAMPLE
+
+[[file:数据读写/screenshot_2018-08-15_14-05-53.png]]
+
+打包编译的时候, 两件事情非常重要:
+1. ~libraryDependencies~ 必须添加关于 hbase 先关的依赖, 确保版本号一致.
+2. ~spark-submit~ shell 命令必须添加 ~--driver-class-path /pathTo/hbase(上
+   图)/*:/pathTo/hbase/conf~
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 14:36:02
+[[file:数据读写/screenshot_2018-08-15_14-36-02.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 14:43:27
+[[file:数据读写/screenshot_2018-08-15_14-43-27.png]]
+
+
+*** 编写程序写入 HBase 表
+
+编程写入是指在 Spark 中生成数据, 以 HBase 表的形式存储下来.
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 14:43:46
+[[file:数据读写/screenshot_2018-08-15_14-43-46.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 14:43:54
+[[file:数据读写/screenshot_2018-08-15_14-43-54.png]]
+
+
+上面的代码与下面 HBase 建表 shell 命令的格式基本保持一致:
+#+BEGIN_EXAMPLE
+插入一个学生记录单元格: ~put [tableName], [rowKey], [columnFamilyName:columnName], [value]~
+#+END_EXAMPLE
+
+~sc.makeRDD()~ 这个函数很重要, 他也是创建RDD, 跟 ~sc.parallize()~ 类似, 但是功能
+更强大可以指定保存到哪个机器上去(这里没加这个参数)
+
+#+BEGIN_EXAMPLE
+        string                              RDD
+  ---------------------                  ---------
+  "3, RongCheng, M, 26" ----makeRDD----> indataRDD
+  "4, GuanHua,   M, 27"
+                                             |
+                                             v
+                                             |
+                                             |
+                                      .map(_.split(","))
+                                             |
+                                             |
+                                             v
+                                             |
+
+                         arr :  ('3',   'RongCheng',      'M',         '26')
+                                  |                                      |
+                                  |                                      |
+                                       .map( arr =>{...} )
+                                  |                                      |
+                                  |                                      |
+                                  |                                      |
+                                  v                                      +--------------+
+                                -----                                                   |
+  val put=new Put(Bytes.toBytes(arr(0)))          put.add(Bytes.toBytes("info"),        |
+  // get 'Put' object of to put one row                   Bytes.toBytes("age   "),      |
+                        .                                 Bytes.toBytes(arr(3).toInt))  |
+                        .                                            .      ^-----------+
+                        .                                            .
+                        .       | id | name      | gender | age |    .
+                        .       |----+-----------+--------+-----|    .
+                        .       |  3 | RongCheng | M      | 26  |    .
+                        ...........^                         ^........
+
+
+                             ( new ImmutableBytesWritable, put ) // one row finished  \
+                             ( new ImmutableBytesWritable, put ) // one row finished   |
+                             ( new ImmutableBytesWritable, put ) // one row finished   | -- rdd --+
+                             ( new ImmutableBytesWritable, put ) // one row finished  /           |
+                                                                                                  |
+                                                                                                  |
+                                                                                                  |
+                                                                                                  v
+                                                                     rdd.saveAsNewAPIHadoopDataset(job.getConfiguration())
+#+END_EXAMPLE
+
+
+注意这里 ~(new ImmutableBytesWritable, put)~ 其实是跟读取 HBase table 时候的操作
+是一致的:
+
+#+BEGIN_EXAMPLE
+                           here
+                       ----------
+~stuRDD.foreach({ case (_, result)})~ 这条语句很重要, 我们读取 HBase 表
+"student" 到 Spark 中得到的 RDD 的数据模式是以二元组: ~(前面的这个用不到, 后面的
+这个有用)~ 为单位的数据组织(同理, 从文本文件读取到的RDD是以行,也就是String为单位
+的数据组织). 所以才声明为 ~case (_, result)~ 这种形式.
+#+END_EXAMPLE
+
+
+通过 HBase shell 输入 ~scan '[表名]'~ 来查看是否输入成功:
+
+[[file:数据读写/screenshot_2018-08-15_15-39-45.png]]
+
+
+
+* WordCount程序读写
+* 综合案例

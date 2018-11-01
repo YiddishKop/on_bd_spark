@@ -1,0 +1,500 @@
+# -*- org-export-babel-evaluate: nil -*-
+#+PROPERTY: header-args :eval never-export
+#+PROPERTY: header-args:scala :session Spark简介
+#+PROPERTY: header-args:python :session Spark简介
+#+PROPERTY: header-args:ipython :session Spark简介
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="/home/yiddi/git_repos/YIDDI_org_export_theme/theme/org-nav-theme_cache.css" >
+#+HTML_HEAD: <script src="https://hypothes.is/embed.js" async></script>
+#+HTML_HEAD: <script type="application/json" class="js-hypothesis-config">
+#+HTML_HEAD: <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+#+OPTIONS: html-link-use-abs-url:nil html-postamble:nil html-preamble:t
+#+OPTIONS: H:3 num:t ^:nil _:nil tags:not-in-toc
+#+TITLE: Spark简介
+#+AUTHOR: yiddishkop
+#+EMAIL: [[mailto:yiddishkop@163.com][yiddi's email]]
+#+TAGS: {PKGIMPT(i) DATAVIEW(v) DATAPREP(p) GRAPHBUILD(b) GRAPHCOMPT(c)} LINAGAPI(a) PROBAPI(b) MATHFORM(f) MLALGO(m)
+
+* Spark架构介绍
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-14 11:43:37
+[[file:Spark简介/screenshot_2018-08-14_11-43-37.png]]
+
+BDAS(伯克利推荐的企业构建大数据产品的框架)
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-14 11:48:16
+[[file:Spark简介/screenshot_2018-08-14_11-48-16.png]]
+Tachyon --- 基于内存的分布式文件系统.
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-14 11:49:31
+[[file:Spark简介/screenshot_2018-08-14_11-49-31.png]]
+
+
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-14 11:52:09
+[[file:Spark简介/screenshot_2018-08-14_11-52-09.png]]
+
+
+
+* Spark 运行原理
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-14 11:54:50
+[[file:Spark简介/screenshot_2018-08-14_11-54-50.png]]
+
+每个 worker node 上都是启动了 executor 进程, 由 executor 启动多个线程, 每个线程
+去执行单个 task.
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-14 11:57:11
+[[file:Spark简介/screenshot_2018-08-14_11-57-11.png]]
+
+Executor 会以一种"优雅的,你几乎感觉不到他存在"的方式, 把某些较大数据放在磁盘中
+(spark 基于内存,但不排斥磁盘).
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-14 11:58:47
+[[file:Spark简介/screenshot_2018-08-14_11-58-47.png]]
+
+一个用户程序(application)提交到 spark, 是由 Driver 来进行调度和管理, Driver 并非
+固定在某台机器上, 而是根据用户程序就近选取 Driver(似乎有些 TaskTracker 的味道).所
+以Driver 可以理解一个(Server node, 管家节点).
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-14 12:01:27
+[[file:Spark简介/screenshot_2018-08-14_12-01-27.png]]
+
+*** Spark 运行基本流程
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-14 15:05:56
+[[file:Spark简介/screenshot_2018-08-14_15-05-56.png]]
+
+SparkContext 就代表了你和集群的连接, 他就是你和集群之间的桥梁, 通过这个对象去访
+问集群中的各种资源和参数. 如果是使用 Interpreter 命令行式的代码, 那么
+SparkContext 是由解释器默认创建好的. 对象索引名称叫做 *sc*
+
+- SparkContext 向资源管理器申请计算资源, 资源管理器可以使 Spark自带的/mesos/YARN.
+- SparkContext 负责把任务分发到不同的节点上, 同时监控任务执行的进程.
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-14 15:11:47
+[[file:Spark简介/screenshot_2018-08-14_15-11-47.png]]
+
+
+每一个 worker node 上都有一个 Executor 进程, 进程会启动相关线程, 线程来执行具体
+任务. Executor 想去启动线程自身就必须获取 cpu 和 mem 资源, 换言之他也要持有资源,
+也就是需要资源管理器给其分配资源.
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-14 15:23:25
+[[file:Spark简介/screenshot_2018-08-14_15-23-25.png]]
+
+SparkContext 会根据你的代码生成一张 *DAG*, 你的代码大概如下:
+
+#+BEGIN_SRC scala
+1. data = readIn(filePath)                 // build RDD
+2. data_trans = filter(data).map(fn,data)  // transformation on RDD
+3. wordsFrequence(data_trans)              // another transformation
+#+END_SRC
+
+所有你写的代码都是针对 RDD 一项又一项的操作, 这些操作合起来可以看成一个有向无环
+图来连接起来. DAG 然后提交给 DAG Scheduler, 其负责把一个完整 DAG 拆解成很多阶段
+(stage), 每一个 stage 都包含很多 task.
+
+#+BEGIN_EXAMPLE
+RDD
+
+v
+v                                                                                +--- target data
+v                                                                                |
+                                                             Executor Executor   |
+transformations                                                +----+  +----+  +-+--+     +----+
+                                                               |    |  |    |  | |  |     |    |
+v                                                              |    |  |    |  |    | ... |    |
+v                                                              +----+  +----+  +----+     +----+
+v                                                               |        |  .
+                                                                |        |  .
+DAG                                                             +--------+  ^
+|                                                               |           .
+|                                                               |request    .
+|                                                               |           .
+|                                                               |           . choose this "nearer" one
+DAG SCHEDULER----+--> stage-1 ---+---- task-1  ---+             |           . and copy code to it to
+                 |               +---- task-2     |             |           . execute.
+                 |               +---- task-3     |             v           ^
+                 |                                |                         .
+                 +--> stage-2 ....                | --> TASK SCHEDULER ......
+                 |                                |
+                 |                                |
+                 |                                |     waiting for Executor of a worker node to request
+                 +--> stage-3 ...              ---+     task, task scheduler choose a "good" Executor
+                                                        under the rule "computing near data"
+
+                                                        after this, another action is copy your code to
+                                                        that Executor of worker node to execute
+
+#+END_EXAMPLE
+任务分发首先是被动的, 是先有 Executor 去申请, 然后 Task Scheduler 根据 "计算向数
+据靠拢" 的就近分发原则把 *代码发给离待处理数据较近的 Executor 去执行*.
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-14 15:43:26
+[[file:Spark简介/screenshot_2018-08-14_15-43-26.png]]
+
+Executor 开启多个线程, 每个线程执行一个 task, 执行完毕后将结果先返回给 TASK
+Scheduler, 然后再返回给 DAG Scheduler, 最后释放计算资源, 写出计算结果(由 Driver
+返回给程序员).
+
+
+*** Spark 架构运行特点
+1. 每个用户程序都有自己专属的 Executor 进程, 并且该进程在用户程序运行期间一直驻
+   留(因为一直驻留,所以不会设计进程切换开销). Executor 进程以多线程方式运行 Task.
+2. Spark 运行与资源管理器(YARN/mesos/自带)无关, 只要能够获取 Executor 进程并保持通信即可.
+3. Task 采用了数据本地性和推测执行等优化机制.(优先把任务往数据周围扔, 如果
+   Executor处在占用状态, 我是等待他,还是扔给别的Executor执行, 两者之间做一个权衡,
+   这就是 *推测执行*)
+
+
+* RDD 运行原理
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-14 16:07:53
+[[file:RDD 运行原理/screenshot_2018-08-14_16-07-53.png]]
+
+RDD 可以避免写磁盘
+
+[[file:RDD 运行原理/screenshot_2018-08-14_16-09-06.png]]
+
+
+一个RDD就是一个分布式对象(内存中是对象)集合, 本质上是一个 *只读* 的分区记录集合,
+每个RDD可以分成 *多个分区*,每个分区就是一个 *数据集片段*, 并且 *一个RDD的不同分
+区可以被保存到集群中不同的节点* 上, 从而可以在集群中的不同节点上进行并行计算.
+
+虽然表面上你获得的是一个 RDD, 但他底层是被自动分配到不同的节点机器上的(可以通过
+编程人为设定这个 RDD 要分成几个区, 以及怎么分).
+
+RDD也叫作高度受限的共享内存模型, 即RDD是只读的记录分区的集合, 不能直接修改, 只能
+基于稳定的物理存储中的数据集创建RDD, 或者通过在其他RDD上执行确定的转换操作(eg,
+map, join, group by) 而创建得到新的RDD.
+
+
+* RDD 操作
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-14 16:32:28
+[[file:RDD 操作/screenshot_2018-08-14_16-32-28.png]]
+
+RDD 分为 *动作*, *转换* 两种操作数据的方式, 粗粒度操作数据(不适合爬虫).
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-14 16:35:11
+[[file:RDD 操作/screenshot_2018-08-14_16-35-11.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-14 16:35:27
+[[file:RDD 操作/screenshot_2018-08-14_16-35-27.png]]
+
+所谓 "transformation" 只做 *轨迹记录不做具体计算*, 一种 *惰性机制*, 可以理解为
+一种"*规划蓝图*". 只有遇到 "action" 时才会从数据源开始一步一步计算并执行这些操作,
+有点像是"*具体实施*".
+
+
+上面这整张图就叫做一个 DAG(有向无环图), 5个关键词之前分析过:
+
+1. code,
+2. sc,
+3. dag,
+4. task,
+5. executor
+
+#+BEGIN_EXAMPLE
+代码 ---> SparkContext ---> DAG -----DAG_SCHEULER----> 阶段拆分 ---> stages ---> task ---> TASK_SCHEDULER <--- executor
+#+END_EXAMPLE
+
+这张图反映了一种 "父子,祖孙" 关系, 所以也叫作 "*Lineage*" 血缘关系图.
+
+有点:
+
+1. 惰性调用
+2. 管道化
+3. 避免同步等待
+4. 不需要保存中间结果
+5. 每次操作可以很简单( mapreduce 总共只有两个阶段, map and reduce 两个阶段就要出
+   结果, 两者逻辑相对复杂, spark RDD 可以进行多次转换操作, 每次操作可以很简单)
+
+
+* RDD 特性
+现有容错机制:
+
+- (代价太大)检查点(数据复制), 操作系统常用,设置一个检查点, 会映像整个系统数据压缩保存.
+
+- 记录日志(记录你做的操作), 数据库中常用, 你删除了, 合并了, 等等, 我可以把操作再
+  执行一遍就可以得到正确结果了.
+
+RDD 容错性
+
+1. 操作都是粗粒度的操作, 日志记录并不复杂.
+2. 通过DAG记录操作轨迹, 如果某个 RDD 发生错误, 找到其父亲节点再次运算生成即可.
+
+
+* RDD 依赖关系和运行过程
+
+
+** 窄依赖和宽依赖
+
+是划分DAG图的依据
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-14 17:23:00
+[[file:RDD 依赖关系和运行过程/screenshot_2018-08-14_17-23-00.png]]
+
+
+依赖关系主要是 *从子RDD看父RDD* 的角度.
+
+窄依赖: (1:1/n:1)
+
+表现为一个父RDD的 *分区* 对应于一个子RDD的 *分区*, 或多个父RDD的 *分区* 对应于一
+个子RDD的 *分区*. 最典型的是 ~map~, ~filter~, ~union~, ~join~ (部分)
+
+
+宽依赖: (1:n)
+
+表现为一个父RDD的一个分区对应一个子RDD的多个分区. 最电影的是 ~groupByKey~ ~join~
+(部分). 通常情况下, 只有 shuffle(洗牌) 操作会产生这种父子RDD之间的宽依赖关系.
+
+什么是 shuffle 呢, MapReduce 为例:
+
+#+BEGIN_EXAMPLE
+词频统计任务:
+
+      map          shuffle(a~f开头扔给reduce1, g-k开头扔给reduce2, 剩下扔个reduce3)
+
+      --------------
+  1   "no" : 210                 这个就是标准的 1:n(从子RDD看父RDD)
+      "dead": 3      .............................................     reduce 1
+      --------------               .
+  2   "after":  145  ...............
+      "joke": 3                    .
+      --------------               .
+  3   "global": 32                 .                                   reduce 2
+      "idea": 12                   .
+      --------------               .
+  4   "map" : 299                  .
+      "fetch": 533                 .
+      --------------               .
+  5   "know": 23                   .                                   reduce 3
+      "predict": 123               .
+      --------------               .
+  6   "abadon" : 43  ...............
+      "loft": 189
+      --------------
+#+END_EXAMPLE
+
+宽依赖, 子如果发生错误, 没法通过一个父亲RDD重新生成. *恢复代价很高*.
+
+
+
+** Stage 的划分
+
+Stage划分算法是一篇论文, 核心思想是:
+
+1. *从数据源开始走*
+2. *遇到宽依赖就断开*
+3. *遇到窄依赖就纳入*
+
+[[file:RDD 依赖关系和运行过程/screenshot_2018-08-14_17-53-26.png]]
+
+
+什么叫 *流水线操作*: 不需要等待纵向其他分区, 可以 *一直横向运算*, 横向一直运算就
+是一个 *流水线计算*, 窄依赖很容易构建流水线, 而宽依赖则需要等待纵向其他分区完成
+才能继续横向运行.
+
+[[file:RDD 依赖关系和运行过程/screenshot_2018-08-14_17-54-28.png]]
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-14 18:01:50
+[[file:RDD 依赖关系和运行过程/screenshot_2018-08-14_18-01-50.png]]
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-14 18:02:01
+[[file:RDD 依赖关系和运行过程/screenshot_2018-08-14_18-02-01.png]]
+
+
+
+* Spark 部署和应用方式
+
+1. Standalone(自带集群资源管理器)
+2. Spark on Mesos
+3. Spark on YARN
+
+[[file:Spark 部署和应用方式/screenshot_2018-08-14_18-05-12.png]]
+
+
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-14 21:37:44
+[[file:Spark 部署和应用方式/screenshot_2018-08-14_21-37-44.png]]
+
+现代企业常用架构模式(with 虚拟化)
+
+#+BEGIN_SRC ditaa :file ./yarndocker.png
+  /------------------------\                /------------------------\
+  |docker                  |                |docker                  |
+  |                        |                |                        |
+  | spark  hadoop storm    | .............  | spark  hadoop storm    |
+  |------------------------|                |------------------------|
+  |          YARN          |                |          YARN          |
+  \------------------------/                \------------------------/
+
+  /-------------------------------------------------------------------\
+  |                         mesos                                     |
+  \-------------------------------------------------------------------/
+
+  ---------------------------------------------------------------------
+
+  /----+   /----+   /----+                     /----+   /----+   /----+
+  | pc |   | pc |   | pc |  .................  | pc |   | pc |   | pc |
+  +----/   +----/   +----/                     +----/   +----/   +----/
+#+END_SRC
+
+#+RESULTS:
+[[file:./yarndocker.png]]
+
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-14 21:39:36
+[[file:Spark 部署和应用方式/screenshot_2018-08-14_21-39-36.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-14 21:39:57
+[[file:Spark 部署和应用方式/screenshot_2018-08-14_21-39-57.png]]
+
+
+* 经典 PPT 解释YARN with docker
+[[https://www.slideshare.net/ydn/july-2014-hug-managing-hadoop-cluster-with-apache-ambari?from_action=save][Privilege Isolation in Docker Containers]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 10:16:13
+[[file:Spark 部署和应用方式/screenshot_2018-08-15_10-16-12.png]]
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 10:16:24
+[[file:Spark 部署和应用方式/screenshot_2018-08-15_10-16-24.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 10:16:52
+[[file:Spark 部署和应用方式/screenshot_2018-08-15_10-16-52.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 10:23:22
+[[file:Spark 部署和应用方式/screenshot_2018-08-15_10-23-22.png]]
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 10:23:37
+[[file:Spark 部署和应用方式/screenshot_2018-08-15_10-23-37.png]]
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 10:24:08
+[[file:Spark 部署和应用方式/screenshot_2018-08-15_10-24-08.png]]
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 10:24:26
+[[file:Spark 部署和应用方式/screenshot_2018-08-15_10-24-26.png]]
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 10:24:46
+[[file:Spark 部署和应用方式/screenshot_2018-08-15_10-24-46.png]]
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 10:14:08
+[[file:Spark 部署和应用方式/screenshot_2018-08-15_10-14-08.png]]
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 10:28:13
+[[file:Spark 部署和应用方式/screenshot_2018-08-15_10-28-13.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 10:28:33
+[[file:Spark 部署和应用方式/screenshot_2018-08-15_10-28-33.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 10:28:52
+[[file:Spark 部署和应用方式/screenshot_2018-08-15_10-28-52.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 10:29:39
+[[file:Spark 部署和应用方式/screenshot_2018-08-15_10-29-39.png]]
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 10:29:47
+[[file:Spark 部署和应用方式/screenshot_2018-08-15_10-29-47.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 10:30:02
+[[file:Spark 部署和应用方式/screenshot_2018-08-15_10-30-02.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 10:30:20
+[[file:Spark 部署和应用方式/screenshot_2018-08-15_10-30-20.png]]
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 10:30:31
+[[file:Spark 部署和应用方式/screenshot_2018-08-15_10-30-31.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 10:30:46
+[[file:Spark 部署和应用方式/screenshot_2018-08-15_10-30-46.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 10:30:56
+[[file:Spark 部署和应用方式/screenshot_2018-08-15_10-30-56.png]]
+* Spark 命令行参数
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-14 21:47:17
+[[file:Spark 部署和应用方式/screenshot_2018-08-14_21-47-17.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-14 21:54:49
+[[file:Spark 部署和应用方式/screenshot_2018-08-14_21-54-49.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-14 21:55:08
+[[file:Spark 部署和应用方式/screenshot_2018-08-14_21-55-08.png]]
+
+
+[[file:Spark 部署和应用方式/screenshot_2018-08-14_21-57-33.png]]
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-14 22:01:17
+[[file:Spark 部署和应用方式/screenshot_2018-08-14_22-01-17.png]]
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-14 22:02:01
+[[file:Spark 部署和应用方式/screenshot_2018-08-14_22-02-01.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-14 22:12:48
+[[file:Spark 部署和应用方式/screenshot_2018-08-14_22-12-48.png]]
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-14 22:13:03
+[[file:Spark 部署和应用方式/screenshot_2018-08-14_22-13-03.png]]
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-14 22:13:43
+[[file:Spark 部署和应用方式/screenshot_2018-08-14_22-13-43.png]]
+
+
+
+
+[[file:Spark 部署和应用方式/screenshot_2018-08-14_22-20-49.png]]
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-14 22:21:18
+[[file:Spark 部署和应用方式/screenshot_2018-08-14_22-21-18.png]]

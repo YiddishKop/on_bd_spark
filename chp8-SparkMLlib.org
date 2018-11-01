@@ -1,0 +1,991 @@
+# -*- org-export-babel-evaluate: nil -*-
+#+PROPERTY: header-args :eval never-export
+#+PROPERTY: header-args:python :session Spark MLlib
+#+PROPERTY: header-args:ipython :session Spark MLlib
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="/home/yiddi/git_repos/YIDDI_org_export_theme/theme/org-nav-theme_cache.css" >
+#+OPTIONS: html-link-use-abs-url:nil html-postamble:nil html-preamble:t
+#+OPTIONS: H:3 num:t ^:nil _:nil tags:not-in-toc
+#+TITLE: Spark MLlib
+#+AUTHOR: yiddishkop
+#+EMAIL: [[mailto:yiddishkop@163.com][yiddi's email]]
+
+#+BEGIN_EXPORT html
+<nav id='navbar'>
+<div class='container'>
+<ul>
+<li><a href='https://yiddishkop.github.io/'>Home</a></li>
+<li><a href='#'>FP</a></li>
+<li><a href='#'>DataScience</a></li>
+<li><a href='#'>Spark</a></li>
+<li><a href='#'>CS</a></li>
+<li><a href='#'>论文撰写</a></li>
+<li><a href='#'>Life</a></li>
+<li><a href='https://yiddishkop.github.io/YIDDI_reme/resume_of_webpage_cn.html'>About</a></li>
+</ul>
+</div>
+</nav>
+#+END_EXPORT
+
+
+
+[[file:screenshot_2018-08-17_02-59-14.png]]
+
+* Spark MLlib 简介
+
+[[file:Spark MLlib 简介/screenshot_2018-08-17_03-00-19.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 03:04:38
+[[file:Spark MLlib 简介/screenshot_2018-08-17_03-04-38.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 03:06:44
+[[file:Spark MLlib 简介/screenshot_2018-08-17_03-06-44.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 03:07:49
+[[file:Spark MLlib 简介/screenshot_2018-08-17_03-07-49.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 03:08:24
+[[file:Spark MLlib 简介/screenshot_2018-08-17_03-08-24.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 03:09:58
+[[file:Spark MLlib 简介/screenshot_2018-08-17_03-09-58.png]]
+
+* 机器学习工作流
+
+** 工作流简介
+
+[[file:机器学习工作流/screenshot_2018-08-17_03-10-23.png]]
+
+
+[[file:机器学习工作流/screenshot_2018-08-17_03-10-38.png]]
+
+整个 Spark 机器学习库就是针对 DataFrame 进行一次又一次的转换.
+
+#+BEGIN_EXAMPLE
+DataFrame-1                     DataFrame-2
+
+| data | true label |           | data | pred label| true label |
+|------+------------|   =====>  |------+-----------+------------|
+| x    |          1 |           | x    |         0 |          1 |
+| y    |          0 |           | y    |         0 |          0 |
+| z    |          0 |           | z    |         1 |          0 |
+
+#+END_EXAMPLE
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 03:15:12
+[[file:机器学习工作流/screenshot_2018-08-17_03-15-12.png]]
+
+
+#+BEGIN_EXAMPLE
+                      训练数据集                    测试数据集(without pred labels)
+                          |                              |
+                          |                              |
+                          |                              |
+                     fit( v )                 transform( v )
+              算法 -----------------> 模型 ------------------> 测试数据集(with pred labels)
+                ^                      ^
+            Estimator               Transformer
+       随机森林, 回归,etc
+
+
+#+END_EXAMPLE
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 03:19:20
+[[file:机器学习工作流/screenshot_2018-08-17_03-19-20.png]]
+
+Estimator, 就可以理解为一个 *算法*, 调用点 ~fit()~
+
+
+[[file:机器学习工作流/screenshot_2018-08-17_03-22-58.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 03:23:20
+[[file:机器学习工作流/screenshot_2018-08-17_03-23-20.png]]
+
+~Pipeline.fit()~ ----> Pipeline Model
+
+
+[[file:机器学习工作流/screenshot_2018-08-17_03-24-43.png]]
+
+蓝色是 Estimator(各种模型), 红色是 Transformer(各种算法)
+
+
+[[file:机器学习工作流/screenshot_2018-08-17_03-27-03.png]]
+
+
+** 工作流实例
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 03:28:11
+[[file:机器学习工作流/screenshot_2018-08-17_03-28-11.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 03:29:03
+[[file:机器学习工作流/screenshot_2018-08-17_03-29-03.png]]
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 03:29:39
+[[file:机器学习工作流/screenshot_2018-08-17_03-29-39.png]]
+
+构建训练数据集DataFrame.
+
+#+BEGIN_EXAMPLE
+sparkSession.createDataFrame( 训练集:seq of vectorized sample ) // 创建无字段名 DataFrame
+            .toDF( 字段名 ) //创建带字段名的 DataFraem.
+#+END_EXAMPLE
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 03:33:09
+[[file:机器学习工作流/screenshot_2018-08-17_03-33-09.png]]
+
+1. Tokenizer():
+
+   - setInputCol("要做tokenize的列名")
+
+   - setOutputCol("做完tokenize后输出的列名")
+
+2. hashingTF: 把单词映射为向量
+
+   - setNumFeatures("hash桶数量,词袋中单词书目")
+
+   - setInputCol("要做tokenize的列名")
+
+   - setOutputCol("做完tokenize后输出的列名")
+
+3. LogisticRegression():
+
+   - setMaxIter(最大循环次数)
+
+   - setRegParam(0.01)
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 03:37:38
+[[file:机器学习工作流/screenshot_2018-08-17_03-37-38.png]]
+
+整个 Pipeline 还没有 fit 数据时, 是一个 Estimator, fit 数据之后就变成了一个
+Transformer. 可以进行数据预测(transform).
+
+#+BEGIN_EXAMPLE
+
+Estimator  -----.fit---> Transformer ---.transform--->
+
+#+END_EXAMPLE
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 03:41:46
+[[file:机器学习工作流/screenshot_2018-08-17_03-41-46.png]]
+
+注意,这里 Seq里面是一个个的元组 tuple, 如果不是 tuple 需要调用
+~seq(xxx).map(Tuple1.apply)~ 进行转换, 成为 seq of tuples, one sample one tuple,
+之后才能够通过 ~.toDF~ 转换成 DataFrame.
+
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 03:42:11
+[[file:机器学习工作流/screenshot_2018-08-17_03-42-11.png]]
+
+
+#+BEGIN_EXAMPLE
+model.transform(test).select("id", "text", "prob", "pred") // DataFrame可以直接使用类SQL语句的
+                     .collect()                            // 收集到本地
+                     .foreach{
+                               case Row(id:Long, text:String, prob:Vector, pre:Double):
+                                    print(s"($id, $text)-->prob=$prob, pred=$pred")
+                             } // 每个 transformer 产生的都是 Row 集合, 我们从中匹配解析出对应数据
+#+END_EXAMPLE
+
+Tokenizer 和 hashingTF 本身就是一个 Transformer, 所以他不需要 fit 数据就可以直接
+transfor data points.
+
+* 特征抽取,转化,选择
+** IF-IDF
+TF-IDF 方法, 用于给单词进行向量化的方法.
+
+[[file:特征抽取,转化,选择/screenshot_2018-08-17_03-52-59.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 03:54:07
+[[file:特征抽取,转化,选择/screenshot_2018-08-17_03-54-07.png]]
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 03:54:15
+[[file:特征抽取,转化,选择/screenshot_2018-08-17_03-54-15.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 03:55:22
+[[file:特征抽取,转化,选择/screenshot_2018-08-17_03-55-22.png]]
+
+
+
+[[file:特征抽取,转化,选择/screenshot_2018-08-17_03-56-11.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 03:56:37
+[[file:特征抽取,转化,选择/screenshot_2018-08-17_03-56-37.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 03:58:52
+[[file:特征抽取,转化,选择/screenshot_2018-08-17_03-58-52.png]]
+
+注意, 经过某些 transformer 之后, 得到的新列, 是有自己特殊格式的, 比如对于
+HashingTF 来说, 得到的新列 "rawFeatures" 的格式就是一个 3-Tuple:
+
+~(词袋数量, 向量化的句子, 该句子中每个单词的权重)~
+
+#+BEGIN_EXAMPLE
+| rawFeatures                                                                             |
+|-----------------------------------------------------------------------------------------|
+| (2000,               [240, 333, 1105, 1329, 135, 1777], [1.0, 2.0, 2.0, 2.0, 1.0, 1.0]) |
+
+   ----                ---------------------------------  ------------------------------
+
+   词袋中单词数量,     向量化的句子,                      单词权重
+#+END_EXAMPLE
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 04:30:42
+[[file:特征抽取,转化,选择/screenshot_2018-08-17_04-30-42.png]]
+
+
+[[file:特征抽取,转化,选择/screenshot_2018-08-17_04-31-43.png]]
+
+
+
+
+
+
+** word2vec
+
+[[file:特征抽取,转化,选择/screenshot_2018-08-17_04-33-22.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 04:34:13
+[[file:特征抽取,转化,选择/screenshot_2018-08-17_04-34-13.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 04:34:26
+[[file:特征抽取,转化,选择/screenshot_2018-08-17_04-34-26.png]]
+
+~.map(Tuple1.apply)~
+
+"Hi I heard about spank".split("") 生成的是一个数组: array("Hi", "I", "heard", xxx)
+
+DataFrame 需要的是一个元组 tuple, 所以调用这个方法可以把 array==>tuple.
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 04:39:53
+[[file:特征抽取,转化,选择/screenshot_2018-08-17_04-39-53.png]]
+
+- setInputCol
+- setOutputCol
+- setVectorSize(3) // Embedding 空间维度
+- setMinCount(0)   //
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 04:40:47
+[[file:特征抽取,转化,选择/screenshot_2018-08-17_04-40-47.png]]
+
+** CountVectorizer
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 04:41:18
+[[file:特征抽取,转化,选择/screenshot_2018-08-17_04-41-18.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 04:41:31
+[[file:特征抽取,转化,选择/screenshot_2018-08-17_04-41-31.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 04:42:16
+[[file:特征抽取,转化,选择/screenshot_2018-08-17_04-42-16.png]]
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 04:42:33
+[[file:特征抽取,转化,选择/screenshot_2018-08-17_04-42-33.png]]
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 04:43:25
+[[file:特征抽取,转化,选择/screenshot_2018-08-17_04-43-25.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 04:44:01
+[[file:特征抽取,转化,选择/screenshot_2018-08-17_04-44-01.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 04:44:10
+[[file:特征抽取,转化,选择/screenshot_2018-08-17_04-44-10.png]]
+
+* 分类与回归
+
+** logistic regression 分类器
+
+[[file:分类与回归/screenshot_2018-08-17_04-44-41.png]]
+
+
+[[file:分类与回归/screenshot_2018-08-17_04-44-29.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 04:45:22
+[[file:分类与回归/screenshot_2018-08-17_04-45-22.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 04:45:36
+[[file:分类与回归/screenshot_2018-08-17_04-45-36.png]]
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 04:47:06
+[[file:分类与回归/screenshot_2018-08-17_04-47-06.png]]
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 04:47:24
+[[file:分类与回归/screenshot_2018-08-17_04-47-24.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 04:48:10
+[[file:分类与回归/screenshot_2018-08-17_04-48-10.png]]
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 04:49:36
+[[file:分类与回归/screenshot_2018-08-17_04-49-36.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 04:51:12
+[[file:分类与回归/screenshot_2018-08-17_04-51-12.png]]
+
+
+
+[[file:分类与回归/screenshot_2018-08-17_04-52-53.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 04:53:14
+[[file:分类与回归/screenshot_2018-08-17_04-53-14.png]]
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 04:54:55
+[[file:分类与回归/screenshot_2018-08-17_04-54-55.png]]
+
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 04:56:01
+[[file:分类与回归/screenshot_2018-08-17_04-56-01.png]]
+
+** 决策树分类器
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 04:57:08
+[[file:分类与回归/screenshot_2018-08-17_04-57-08.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 04:57:45
+[[file:分类与回归/screenshot_2018-08-17_04-57-45.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 04:57:51
+[[file:分类与回归/screenshot_2018-08-17_04-57-51.png]]
+
+
+
+[[file:分类与回归/screenshot_2018-08-17_04-58-20.png]]
+
+
+
+[[file:分类与回归/screenshot_2018-08-17_04-58-48.png]]
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 04:58:57
+[[file:分类与回归/screenshot_2018-08-17_04-58-57.png]]
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 04:59:13
+[[file:分类与回归/screenshot_2018-08-17_04-59-13.png]]
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 04:59:03
+[[file:分类与回归/screenshot_2018-08-17_04-59-03.png]]
+
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 04:59:51
+[[file:分类与回归/screenshot_2018-08-17_04-59-51.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 05:00:20
+[[file:分类与回归/screenshot_2018-08-17_05-00-20.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 05:00:59
+[[file:分类与回归/screenshot_2018-08-17_05-00-59.png]]
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 05:01:13
+[[file:分类与回归/screenshot_2018-08-17_05-01-13.png]]
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 05:02:04
+[[file:分类与回归/screenshot_2018-08-17_05-02-04.png]]
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 05:02:39
+[[file:分类与回归/screenshot_2018-08-17_05-02-39.png]]
+
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 05:03:19
+[[file:分类与回归/screenshot_2018-08-17_05-03-19.png]]
+
+* Spark ML库结构
+- org.apache.spark.ml
+  Estimator
+  Model
+  Pipeline
+  PipelineModel
+  PipelineStage
+  PredictionModel
+  Predictor
+  Transformer
+  UnaryTransformer
+  focushide
+- org.apache.spark.ml.attribute
+Attribute
+AttributeGroup
+AttributeType
+BinaryAttribute
+NominalAttribute
+NumericAttribute
+UnresolvedAttribute
+focushide
+org.apache.spark.ml.classification
+BinaryLogisticRegressionSummary
+BinaryLogisticRegressionTrainingSummary
+ClassificationModel
+Classifier
+DecisionTreeClassificationModel
+DecisionTreeClassifier
+GBTClassificationModel
+GBTClassifier
+LinearSVC
+LinearSVCModel
+LogisticRegression
+LogisticRegressionModel
+LogisticRegressionSummary
+LogisticRegressionTrainingSummary
+MultilayerPerceptronClassificationModel
+MultilayerPerceptronClassifier
+NaiveBayes
+NaiveBayesModel
+OneVsRest
+OneVsRestModel
+ProbabilisticClassificationModel
+ProbabilisticClassifier
+RandomForestClassificationModel
+RandomForestClassifier
+focushide
+org.apache.spark.ml.clustering
+BisectingKMeans
+BisectingKMeansModel
+BisectingKMeansSummary
+ClusteringSummary
+DistributedLDAModel
+GaussianMixture
+GaussianMixtureModel
+GaussianMixtureSummary
+KMeans
+KMeansModel
+KMeansSummary
+LDA
+LDAModel
+LocalLDAModel
+focushide
+org.apache.spark.ml.evaluation
+BinaryClassificationEvaluator
+ClusteringEvaluator
+Evaluator
+MulticlassClassificationEvaluator
+RegressionEvaluator
+focushide
+org.apache.spark.ml.feature
+Binarizer
+BucketedRandomProjectionLSH
+BucketedRandomProjectionLSHModel
+Bucketizer
+ChiSqSelector
+ChiSqSelectorModel
+CountVectorizer
+CountVectorizerModel
+DCT
+ElementwiseProduct
+FeatureHasher
+HashingTF
+IDF
+IDFModel
+Imputer
+ImputerModel
+IndexToString
+Interaction
+LabeledPoint
+MaxAbsScaler
+MaxAbsScalerModel
+MinHashLSH
+MinHashLSHModel
+MinMaxScaler
+MinMaxScalerModel
+NGram
+Normalizer
+OneHotEncoder
+OneHotEncoderEstimator
+OneHotEncoderModel
+PCA
+PCAModel
+PolynomialExpansion
+QuantileDiscretizer
+RegexTokenizer
+RFormula
+RFormulaModel
+SQLTransformer
+StandardScaler
+StandardScalerModel
+StopWordsRemover
+StringIndexer
+StringIndexerModel
+Tokenizer
+VectorAssembler
+VectorIndexer
+VectorIndexerModel
+VectorSizeHint
+VectorSlicer
+Word2Vec
+Word2VecModel
+focushide
+org.apache.spark.ml.fpm
+FPGrowth
+FPGrowthModel
+focushide
+org.apache.spark.ml.image
+ImageSchema
+focushide
+org.apache.spark.ml.linalg
+DenseMatrix
+DenseVector
+Matrices
+Matrix
+SparseMatrix
+SparseVector
+SQLDataTypes
+Vector
+Vectors
+focushide
+org.apache.spark.ml.param
+BooleanParam
+DoubleArrayArrayParam
+DoubleArrayParam
+DoubleParam
+FloatParam
+IntArrayParam
+IntParam
+JavaParams
+LongParam
+Param
+ParamMap
+ParamPair
+Params
+ParamValidators
+StringArrayParam
+focushide
+org.apache.spark.ml.param.shared
+HasAggregationDepth
+HasCheckpointInterval
+HasCollectSubModels
+HasElasticNetParam
+HasFeaturesCol
+HasFitIntercept
+HasHandleInvalid
+HasInputCol
+HasInputCols
+HasLabelCol
+HasLoss
+HasMaxIter
+HasOutputCol
+HasOutputCols
+HasPredictionCol
+HasProbabilityCol
+HasRawPredictionCol
+HasRegParam
+HasSeed
+HasSolver
+HasStandardization
+HasStepSize
+HasThreshold
+HasThresholds
+HasTol
+HasVarianceCol
+HasWeightCol
+focushide
+org.apache.spark.ml.recommendation
+ALS
+ALSModel
+focushide
+org.apache.spark.ml.regression
+AFTSurvivalRegression
+AFTSurvivalRegressionModel
+DecisionTreeRegressionModel
+DecisionTreeRegressor
+GBTRegressionModel
+GBTRegressor
+GeneralizedLinearRegression
+GeneralizedLinearRegressionModel
+GeneralizedLinearRegressionSummary
+GeneralizedLinearRegressionTrainingSummary
+IsotonicRegression
+IsotonicRegressionModel
+LinearRegression
+LinearRegressionModel
+LinearRegressionSummary
+LinearRegressionTrainingSummary
+RandomForestRegressionModel
+RandomForestRegressor
+RegressionModel
+focushide
+org.apache.spark.ml.source.libsvm
+LibSVMDataSource
+focushide
+org.apache.spark.ml.stat
+ChiSquareTest
+Correlation
+Summarizer
+SummaryBuilder
+focushide
+org.apache.spark.ml.stat.distribution
+MultivariateGaussian
+focushide
+org.apache.spark.ml.tree
+CategoricalSplit
+ContinuousSplit
+InternalNode
+LeafNode
+Node
+Split
+focushide
+org.apache.spark.ml.tuning
+CrossValidator
+CrossValidatorModel
+ParamGridBuilder
+TrainValidationSplit
+TrainValidationSplitModel
+focushide
+org.apache.spark.ml.util
+DefaultParamsReadable
+DefaultParamsWritable
+Identifiable
+MLReadable
+MLReader
+MLWritable
+MLWriter
+* 源码分析
+
+导入必要的包, 主要是回归包中的线性回归和聚类包中的KMeans, 还包括特征转换包中的
+VectorAssembler.
+#+BEGIN_SRC scala :dir ~/worklap/
+  package sparkml
+
+  import org.apache.spark.ml.clustering.KMeans
+  import org.apache.spark.ml.regression.LinearRegression
+  import org.apache.spark.ml.feature.VectorAssembler
+  import org.apache.spark.sql._
+  import scalafx.application.JFXApp
+  import swiftvis2.plotting._
+  import swiftvis2.plotting
+  import swiftvis2.spark._
+  import swiftvis2.plotting.renderer.FXRenderer
+  import org.apache.spark.sql.functions._
+
+#+END_SRC
+
+
+将单个样本抽象成 case class, 每个属性代表样本的一个特征:
+#+BEGIN_SRC scala
+  /*
+   want to load in stations from ghcnd_stations.txt data, then cluster it geographically
+  ,*/
+
+  case class Station(sid: String, lat: Double, lon: Double, elev: Double, name: String)
+  case class NOAAData(sid: String, date: java.sql.Date, measure: String, value: Double)
+#+END_SRC
+
+创建伴生对象, 其内:
+1. 创建 SparkSession 对象, 通过 SparkSession 类.
+   1. 设置为本地运行模式,根据具体情况选择线程数目:
+      ~SparkSession.builder().master("local[*]").getOrCreate()~
+2. 创建 DataFrameReader 对象, 读取数据源 textFile 数据为 DataFrame, 并将其映射为一个 object
+   DataFrame: ~spark.read.textFile("path/name.txt").map{line => Station(id, lat,
+   lon, elev, name)}~
+
+
+创建 sparkSession 对象与Spark进行交互.
+#+BEGIN_SRC scala
+  object NOAAClustering extends JFXApp{
+    val spark = SparkSession
+      .builder()
+      .master("local[*]")
+      .getOrCreate()
+
+    import spark.implicits._
+
+    spark.sparkContext.setLogLevel("WARN")
+#+END_SRC
+
+
+一, 使用 KMeans 对气象站的位置经纬度进行聚类(也就是只有两个特征, 经度+纬度)
+
+导入数据, 对 DataFrame 进行转换并缓存:
+
+~DataFrame(with string lines inside) ==> DataFrame(with objects inside)~
+#+BEGIN_SRC scala
+  ////////////////////////////////////////////////////////////////////////////////////////////
+  // Problem 1: clustering all global stations to 2000 cluster, according to their location //
+  ////////////////////////////////////////////////////////////////////////////////////////////
+  val stations = spark.read.textFile("data/ghcnd-stations.txt").map { line =>
+    val id = line.substring(0, 11)
+    val lat = line.substring(12, 20).trim.toDouble
+    val lon = line.substring(21, 30).trim.toDouble
+    val elev = line.substring(31, 37).trim.toDouble
+    val name = line.substring(41, 71)
+    Station(id, lat, lon, elev, name)
+  }.cache
+
+  // stations.show
+  //////////////////////////////////////////////////////////////////////
+  // [info] +-----------+-------+--------+------+--------------------+//
+  // [info] |        sid|    lat|     lon|  elev|                name|//
+  // [info] +-----------+-------+--------+------+--------------------+//
+  // [info] |ACW00011604|17.1167|-61.7833|  10.1|ST JOHNS COOLIDGE...|//
+  // [info] |ACW00011647|17.1333|-61.7833|  19.2|ST JOHNS         ...|//
+  // [info] |AE000041196| 25.333|  55.517|  34.0|SHARJAH INTER. AI...|//
+  // [info] |AEM00041194| 25.255|  55.364|  10.4|DUBAI INTL       ...|//
+  // [info] |AEM00041217| 24.433|  54.651|  26.8|ABU DHABI INTL   ...|//
+  //////////////////////////////////////////////////////////////////////
+#+END_SRC
+
+创建 Transformer: VectorAssembler用于列合并, 并将其应用在数据集上.
+#+BEGIN_SRC scala
+    //////////////////////////////////////////////////////////////////////////////
+    // step 1 get data from datafile used for my clustering into my data frames //
+    //////////////////////////////////////////////////////////////////////////////
+    // step 1.1
+    // get a spark vector column from existing column and given a name, by built-in VectorAssembler
+    val stationsVA = new VectorAssembler()
+      .setInputCols(Array("lat", "lon"))
+      .setOutputCol("location")
+    // step 1.2
+    // using this VectorAssembler to transform the given dataset, and produce another one
+    val stationsWithLoc = stationsVA
+      .transform(stations) // still error: field "features" doesn't exsit
+    // stationsWithLoc.show
+      //////////////////////////////////////////////////////////////////////////////////////////
+      // [info] +-----------+-------+--------+------+--------------------+------------------+ //
+      // [info] |        sid|    lat|     lon|  elev|                name|          location| //
+      // [info] +-----------+-------+--------+------+--------------------+------------------+ //
+      // [info] |ACW00011604|17.1167|-61.7833|  10.1|ST JOHNS COOLIDGE...|[17.1167,-61.7833]| //
+      // [info] |ACW00011647|17.1333|-61.7833|  19.2|ST JOHNS         ...|[17.1333,-61.7833]| //
+      // [info] |AE000041196| 25.333|  55.517|  34.0|SHARJAH INTER. AI...|   [25.333,55.517]| //
+      // [info] |AEM00041194| 25.255|  55.364|  10.4|DUBAI INTL       ...|   [25.255,55.364]| //
+      // [info] |AEM00041217| 24.433|  54.651|  26.8|ABU DHABI INTL   ...|   [24.433,54.651]| //
+      //////////////////////////////////////////////////////////////////////////////////////////
+
+#+END_SRC
+
+创建 Estimator: KMeans 用于对数据集进行聚类,指明类个数(~setK~), 特征列
+(~setFeaturesCol~), 预测结果输出列(~setPredictionCol~). 并对 Estimator 进行训练
+(~.fit~) 生成 Transformer.
+#+BEGIN_SRC scala
+    //////////////////////////////////////////////////////////////////////////////////////
+    // Step 2 get the model( or called a transfomer ) from Estimater and formatted data //
+    //////////////////////////////////////////////////////////////////////////////////////
+    // tuning General Estimator to create a Specific Estimator
+    // Specific Estimator fit the formatted dataset to create a Model
+    val kMeans = new KMeans()
+      .setK(2000)
+      .setFeaturesCol("location")
+      .setPredictionCol("cluster")
+    val stationClusetModel = kMeans.fit(stationsWithLoc) // fit maybe the last step to build a model
+                                                         // by a given algorithm
+                                                         // algo fit (formatted dataset) => model
+#+END_SRC
+
+
+使用 Transformer 对数据集进行预测, 生成新的 DataFrame(with predictionColumn
+inside)
+#+BEGIN_SRC scala
+    //////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Step 3 use model as Transformer to tansform the formatted data to get predicted data and plot it //
+    //////////////////////////////////////////////////////////////////////////////////////////////////////
+    // in order to specify which stations are in which clusters, we need to do a transform
+    // The model is it self a Transformer
+    // use it to tansform the formatted dataset to get info about the cluster each one of these stations
+    // was assigned to and then we need to use it color our plot
+    // but color 2000 cluster distinctly is too challenge, so I want to make a gradient
+    val stationsWithClusters = stationClusetModel.transform(stationsWithLoc)
+    //  stationsWithClusters.show
+      /////////////////////////////////////////////////////////////////////////////////////////////////////
+      // [info] +-----------+-------+--------+------+--------------------+------------------+----------+ //
+      // [info] |        sid|    lat|     lon|  elev|                name|          location|prediction| //
+      // [info] +-----------+-------+--------+------+--------------------+------------------+----------+ //
+      // [info] |ACW00011604|17.1167|-61.7833|  10.1|ST JOHNS COOLIDGE...|[17.1167,-61.7833]|       665| //
+      // [info] |ACW00011647|17.1333|-61.7833|  19.2|ST JOHNS         ...|[17.1333,-61.7833]|       665| //
+      // [info] |AE000041196| 25.333|  55.517|  34.0|SHARJAH INTER. AI...|   [25.333,55.517]|       275| //
+      // [info] |AEM00041194| 25.255|  55.364|  10.4|DUBAI INTL       ...|   [25.255,55.364]|       275| //
+      // [info] |AEM00041217| 24.433|  54.651|  26.8|ABU DHABI INTL   ...|   [24.433,54.651]|       275| //
+      /////////////////////////////////////////////////////////////////////////////////////////////////////
+#+END_SRC
+
+plot the climate region based on the prediction Column
+#+BEGIN_SRC scala
+    // what I want to do is from the cluster's color to specify the climate region
+    val x = stationsWithClusters.select('lon).as[Double].collect()
+    val y = stationsWithClusters.select('lat).as[Double].collect()
+    val predict = stationsWithClusters.select('cluster).as[Double].collect()
+    val cg = ColorGradient(0.0 -> BlueARGB,
+                           1000.0 -> RedARGB,
+                           2000.0 -> GreenARGB)
+    val plot = Plot.scatterPlot(x, y, title="Stations",
+                                xLabel="Longitude", yLabel="Latitude", symbolSize=3,
+                                symbolColor= predict.map(cg))
+    FXRenderer(plot, 1000, 650)
+#+END_SRC
+
+
+二, 使用 LinearReg 对所有气象站一年中气温最大值进行回归分析.
+
+
+#+BEGIN_SRC scala
+    //////////////////////////////////////////////////////////////////////////
+    // Problem 2: for the ONE cluster from prediction result from above,
+    //            find all stations' the TMAX over the year
+    //            then, use linear regression to fit that data
+    //////////////////////////////////////////////////////////////////////////
+    // step 1: read in the NOAAData data file
+    val data2017 = spark
+      .read
+      .schema(Encoders.product[NOAAData].schema)
+      .option("dateFormat", "yyyyMMdd")
+      .csv("data/2017.csv")
+
+    // pull out all data from ONE cluster 441, make a new table ONLY contains the TMAX
+    val clusterStations = stationsWithClusters
+      .filter('cluster === 441)
+      .select('sid)
+    //  clusterStations.show
+      //////////////////////////
+      // [info] +-----------+ //
+      // [info] |        sid| //
+      // [info] +-----------+ //
+      // [info] |US1ILBN0010| //
+      // [info] |US1ILBN0014| //
+      // [info] |US1ILMCH017| //
+      // [info] |US1ILMCH044| //
+      //////////////////////////
+
+    // I want to plot the value against the date
+    val clusterData = data2017
+      .filter('measure === "TMAX")
+      .join(clusterStations, "sid")
+    //  clusterData.show
+      ///////////////////////////////////////////////////
+      // [info] +-----------+----------+-------+-----+ //
+      // [info] |        sid|      date|measure|value| //
+      // [info] +-----------+----------+-------+-----+ //
+      // [info] |USC00470645|2017-01-01|   TMAX|-11.0| //
+      // [info] |USC00472869|2017-01-01|   TMAX|  6.0| //
+      // [info] |USC00472051|2017-01-01|   TMAX| 11.0| //
+      // [info] |USC00473820|2017-01-01|   TMAX|  6.0| //
+      // [info] |USC00478910|2017-01-01|   TMAX|  0.0| //
+      ///////////////////////////////////////////////////
+
+
+    // linear function:
+    // y = a*x1 + b*x2 + c*x3
+    // x1,x2,x3 are data values we have
+    // a,b,c are constants that we want to figure out
+    // we want to figure out which one of these combinations of coefficients give us the best fit for 'y'
+    // across whole bunch of data points
+
+    // but we want to do more: a linear combinations of sin and cos
+    // y = a*sin(doy) + b*cos(doy)
+
+    // dayofyear is in O.A.S.S.functions
+    // build the dataset we want to do things above, find the best fit of y
+    val withDOYinfo = clusterData
+      .withColumn("doy", dayofyear('date))
+      .withColumn("doySin", sin('doy/365*2*math.Pi)) // day/365 = angle/2pi
+      .withColumn("doyCos", cos('doy/365*2*math.Pi)) // day/365 = angle/2pi
+
+    val linearRegData = new VectorAssembler()
+      .setInputCols(Array("doySin","doyCos"))
+      .setOutputCol("doyTrig")
+      .transform(withDOYinfo)
+      .cache()
+
+    val LinearReg = new LinearRegression()
+      .setFeaturesCol("doyTrig")
+      .setLabelCol("value")
+      .setMaxIter(10)
+      .setPredictionCol("pmaxTemp")
+      // .setRegParam(0.2) // used for avoiding overfitting, just put here
+
+    val linearRegModel = LinearReg.fit(linearRegData)
+    println(linearRegModel.coefficients + " " +linearRegModel.intercept)
+    // intercept should be some equal to the average of `Temp, so you can check it with the picture
+    // create by code below
+
+    // apply mode to data
+    // withLinearFit is a dataframe
+    val withLinearFit = linearRegModel.transform(linearRegData)
+
+
+
+    val doy = withLinearFit.select('doy).as[Double].collect(): PlotDoubleSeries
+    val maxTemp = withLinearFit.select('value).as[Double].collect(): PlotDoubleSeries
+    val pmaxTemp = withLinearFit.select('pmaxTemp).as[Double].collect(): PlotDoubleSeries
+    // if you have 2 sets of dots ,should use scatterPlotsFull instead of scatterPlot
+    // set-1 (doy, value) ,set-2 (doy, pmaxTemp)
+    val size1 = 3: PlotDoubleSeries
+    val size2 = 0: PlotDoubleSeries // dont'show point, we want just connect them by line
+    val color = BlackARGB: PlotIntSeries
+    val stroke = renderer.Renderer.StrokeData(1, Nil)// 1 -width of line, Nil: dashing
+    val tempPlot = Plot.scatterPlotsFull(
+      Array(
+        (doy, maxTemp,  color, size1, None,                               None, None),
+        (doy, pmaxTemp, color, size2, None, //Some((0: PlotIntSeries) -> stroke),
+         None, None)),
+      title="High Temps",
+      xLabel="Day of Year",
+      yLabel="Temp"
+    )
+    FXRenderer(tempPlot, 600, 600)
+
+
+
+    spark.stop
+  }
+#+END_SRC

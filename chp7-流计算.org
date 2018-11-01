@@ -1,0 +1,859 @@
+# -*- org-export-babel-evaluate: nil -*-
+#+PROPERTY: header-args :eval never-export
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="css/site.css" >
+#+OPTIONS: html-link-use-abs-url:nil html-postamble:t html-preamble:t
+#+OPTIONS: H:3 num:nil ^:nil _:nil tags:not-in-toc
+#+TITLE: 第7章, Spark Streaming
+#+AUTHOR: yiddishkop
+#+EMAIL: yiddishkop@163.com
+
+#+BEGIN_EXPORT html
+<nav id='navbar'>
+<div class='container'>
+<ul>
+<li><a href='https://yiddishkop.github.io/'>Home</a></li>
+<li><a href='#'>FP</a></li>
+<li><a href='#'>DataScience</a></li>
+<li><a href='#'>Spark</a></li>
+<li><a href='#'>CS</a></li>
+<li><a href='#'>论文撰写</a></li>
+<li><a href='#'>Life</a></li>
+<li><a href='https://yiddishkop.github.io/YIDDI_reme/resume_of_webpage_cn.html'>About</a></li>
+</ul>
+</div>
+</nav>
+#+END_EXPORT
+
+
+* 流计算概述
+** 静态数据和流数据
+
+数据仓库(eg, Hive in Hadoop): 不断的把某些业务系统产生的数据经过抽取/转换加入数据仓
+库中,他是包含时间维度的---eg.一天一次. 如此就可以去分析过去一个月每天的库存变化
+情况等等. 数据仓库中保留了大量的历史时间线数据, 他是静态的.
+
+数据库(eg, HBase in Hadoop): 数据库只是记录某一时刻的数据.
+
+~数据仓库 = time(数据库)~ 他俩都是 *静态数据*
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 01:16:40
+[[file:流计算概述/screenshot_2018-08-16_01-16-40.png]]
+
+
+[[file:流计算概述/screenshot_2018-08-16_01-22-23.png]]
+
+电子商务网站, 根据用户点击流构建用户画像, 了解用户特征, 根据与你有相似特征的其他
+用户的购买行为对你进行实时推荐.
+
+
+[[file:流计算概述/screenshot_2018-08-16_01-27-49.png]]
+
+流数据有几大特点:
+1. 源源不断, 数据量大
+2. 来源多, 可以是套接字流, 可以是鼠标点击流, 可以是传感器流 etc.
+2. 相邻的数据无法保证时间线顺序, 数据顺序可能是颠倒的, 先到达的是历史数据,后到达
+   的是当前数据,
+
+
+** 批量计算和实时计算
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 01:30:31
+[[file:流计算概述/screenshot_2018-08-16_01-30-31.png]]
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 01:30:43
+[[file:流计算概述/screenshot_2018-08-16_01-30-43.png]]
+
+
+** 流计算概念
+[[file:流计算概述/screenshot_2018-08-16_01-31-18.png]]
+
+
+*流数据的价值是随着时间推移逐渐降低的*.
+
+[[file:流计算概述/screenshot_2018-08-16_01-31-30.png]]
+
+** 流计算与Hadoop
+
+
+[[file:流计算概述/screenshot_2018-08-16_01-33-07.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 01:34:06
+[[file:流计算概述/screenshot_2018-08-16_01-34-06.png]]
+
+
+用批处理的模式模拟流处理: *把流数据切成一个个小片段, 每一个小片段用批处理模式处
+理*. Spark 就是这种方式取处理流数据的.
+
+#+BEGIN_EXAMPLE
+
+            批处理批处理批处理
+            /----\/----\/----\/----\/----\/----\/----\/----\/----\/----\/----\/----\/----\
+流数据:     ------------------------------------------------------------------------------>
+时间线
+#+END_EXAMPLE
+
+[[file:流计算概述/screenshot_2018-08-16_01-34-17.png]]
+
+
+[[file:流计算概述/screenshot_2018-08-16_01-37-12.png]]
+
+
+
+
+
+** 流计算框架
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 01:37:55
+[[file:流计算概述/screenshot_2018-08-16_01-37-55.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 01:38:03
+[[file:流计算概述/screenshot_2018-08-16_01-38-03.png]]
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 01:38:10
+[[file:流计算概述/screenshot_2018-08-16_01-38-10.png]]
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 01:38:30
+[[file:流计算概述/screenshot_2018-08-16_01-38-30.png]]
+
+
+
+
+
+
+** 流计算处理流程
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 01:38:54
+[[file:流计算概述/screenshot_2018-08-16_01-38-54.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 01:39:02
+[[file:流计算概述/screenshot_2018-08-16_01-39-02.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 01:39:24
+[[file:流计算概述/screenshot_2018-08-16_01-39-24.png]]
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 01:39:40
+[[file:流计算概述/screenshot_2018-08-16_01-39-40.png]]
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 01:40:00
+[[file:流计算概述/screenshot_2018-08-16_01-40-00.png]]
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 01:40:13
+[[file:流计算概述/screenshot_2018-08-16_01-40-13.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 01:40:55
+[[file:流计算概述/screenshot_2018-08-16_01-40-55.png]]
+
+
+应用程序一直驻留在工作节点, 数据一来就处理, 处理完就往外扔.
+
+
+并非等待用户发起查询, 而是得到结果就主动推送给用户.
+
+[[file:流计算概述/screenshot_2018-08-16_01-41-47.png]]
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 01:42:36
+[[file:流计算概述/screenshot_2018-08-16_01-42-36.png]]
+
+
+
+
+* Spark Streaming 简介
+
+
+[[file:Spark Streaming 简介/screenshot_2018-08-16_08-08-58.png]]
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 08:09:34
+[[file:Spark Streaming 简介/screenshot_2018-08-16_08-09-34.png]]
+
+*原始数据 1 秒切一次, 每切一次生成一个 RDD*.
+
+[[file:Spark Streaming 简介/screenshot_2018-08-16_08-10-16.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 08:16:32
+[[file:Spark Streaming 简介/screenshot_2018-08-16_08-16-32.png]]
+
+DStream 的本质就是 RDD 序列, 他不是像 DataFrame 有自己的结构.
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 08:18:59
+[[file:Spark Streaming 简介/screenshot_2018-08-16_08-18-59.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 08:19:26
+[[file:Spark Streaming 简介/screenshot_2018-08-16_08-19-26.png]]
+
+
+
+[[file:Spark Streaming 简介/screenshot_2018-08-16_08-19-53.png]]
+
+Spark 只是通过 批处理 来模拟 流处理, 它本身并不具备像 Storm 一样毫秒级别的响应速
+度, 但是 Spark Streaming 有其自身的优点: *同时兼容批处理和流处理* , 你能够在
+Spark的 *小批处理窗口内, 把其他历史数据融合进来*, 很好的应用于 *需要历史数据和实
+时数据联合分析* 的特定应用场合.
+
+
+* DStream 操作概述
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 08:23:26
+[[file:DStream 操作概述/screenshot_2018-08-16_08-23-26.png]]
+
+
+#+BEGIN_EXAMPLE
+普通 Spark 架构: app -> Driver -> sparkContext -> worker -> Executor <- task
+#+END_EXAMPLE
+[[file:DStream 操作概述/screenshot_2018-08-16_08-23-36.png]]
+
+
+当做流处理的时候, 你必须有一个监听程序一直跑在某个 Executor 上, 一个无休无止的
+task. 这样的task 就叫做 *Receiver*. 他会一直接受某个数据源(eg, Kafka)送来的数据,
+并进行相关的处理, 这个"处理"的逻辑就是我们编写的程序, 一般应用都会设置多个
+*Receiver* 每个 Receiver 负责一个 input DStream.
+
+[[file:DStream 操作概述/screenshot_2018-08-16_08-24-30.png]]
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 08:29:04
+[[file:DStream 操作概述/screenshot_2018-08-16_08-29-04.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 08:30:04
+[[file:DStream 操作概述/screenshot_2018-08-16_08-30-04.png]]
+
+| Spark        | Spark SQL    | Spark Streaming  |
+| RDD          | DataFrame    | StreamingContext |
+| SparkContext | SparkSession | StreamingContext |
+
+_在SparkShell中_:
+
+可以从 SparkContext 对象来创建 StreamingContext 对象:
+#+BEGIN_EXAMPLE
+                          指明多长对数据流时间切分一次
+                     --  ---------
+new StreamingContext(sc, Seconds(1))
+#+END_EXAMPLE
+
+_不在SparkShell中_: 通过 SparkConf 对象生成 StreamingContext 对象.
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 08:38:32
+[[file:DStream 操作概述/screenshot_2018-08-16_08-38-32.png]]
+
+#+BEGIN_EXAMPLE
+1. val conf = new SparkConf().setAppName().setMaster
+   ------------------------------------------------
+                         |
+                         |
+                         |
+                         |
+                         v
+2. new StreamingContext(conf, Seconds(1))
+
+#+END_EXAMPLE
+
+
+* 输入源
+| 文建数据源         | 套接字流数据源       | RDD流数据源     |
+|--------------------+----------------------+-----------------|
+| ssc.textFileStream | ssc.socketTextStream | ssc.queueStream |
+|                    |                      |                 |
+** (基本输入源)文件流
+    对某一个目录下的文件实时监控, 只要有新的文件写到该目录, 就会把他的内容抓出来
+    扔到Streaming去处理. eg, 比如日志文件. 在实时监控之前, 历史上已经有的文件不
+    会进行任何捕捉. 他只捕捉动态变化的文件.
+
+
+[[file:输入源/screenshot_2018-08-16_08-49-33.png]]
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 08:50:21
+[[file:输入源/screenshot_2018-08-16_08-50-21.png]]
+
+
+~ssc.textFileStream("path/DirName")~ 生成一个文件数据流, 根据StreamingContext配
+置的切断时间(~Seconts(num)~)进行切分. 其切分结果就是 RDD(with multiple lines as
+item inside), 注意这时候对多行String切成单词 +就不能用 map+ , 必须使用 ~flatMap~.
+
+#+BEGIN_EXAMPLE
+xxx.xxxxxxx.aaaaaaa.bb.ssssssssssssss.ddd.zzzzzzzzzzzz.
+\-----/\-----/\-----/\-----/\-----/\-----/\-----/
+   |
+   |
+xxx.xxx  ===> textFileStream
+   |
+   |
+   v
+RDD(with multiple lines as whole inside)
+   |
+   | .flatMap(_.split())
+   |
+   v
+RDD(with array of words as whole inside)
+   |
+   | .map(x=>(x,1).reduceByKey(_+_))
+   |
+   v
+RDD(with array of tuple(word, num) as whole inside)
+#+END_EXAMPLE
+
+注意 RDD(with line as item inside) 与 RDD(with multiple lines as whole inside)
+的处理方式是不一样的, 前者很明显我希望一行一行的处理, 就是针对 item 做处理; 后者
+一个 RDD 就只有一个 item, 将其作为整体处理.
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 09:09:47
+[[file:输入源/screenshot_2018-08-16_09-09-47.png]]
+
+
+
+[[file:输入源/screenshot_2018-08-16_09-11-00.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 09:11:24
+[[file:输入源/screenshot_2018-08-16_09-11-24.png]]
+
+~setMaster("local[2]")~ 应该设置双倍的线程数, 一个用于监听, 一个用于处理.
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 09:14:15
+[[file:输入源/screenshot_2018-08-16_09-14-15.png]]
+
+
+
+** (基本输入源)套接字流
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 09:25:19
+[[file:输入源/screenshot_2018-08-16_09-25-19.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 09:25:40
+[[file:输入源/screenshot_2018-08-16_09-25-40.png]]
+
+首先必须检测参数数量是否两个: *主机地址* 和 *端口号*, 如此我才知道我要监测的目标
+位置.
+
+~StreamingExamples.setStreamingLogLevels()~ 这个很重要, 必须要设置, 否则打印信息
+可能不会显示在 command line 界面.
+
+
+| 套接字流             | 文件流             |
+| ssc.socketTextStream | ssc.textFileStream |
+
+
+
+如下源码用于设置日志格式(这里不做详述):
+[[file:输入源/screenshot_2018-08-16_09-31-37.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 09:32:10
+[[file:输入源/screenshot_2018-08-16_09-32-10.png]]
+
+
+#+BEGIN_SRC shell
+nc-lk 9999
+#+END_SRC
+这是一个 linux 自带命令, 允许你连入自己的 ~9999~ 端口, 然后进行输入.
+
+
+[[file:输入源/screenshot_2018-08-16_09-33-00.png]]
+
+
+自己编写输入源(注意毫秒为单位):
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 09:35:02
+[[file:输入源/screenshot_2018-08-16_09-35-02.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 09:40:12
+[[file:输入源/screenshot_2018-08-16_09-40-12.png]]
+
+~def index()~ 函数传递10就生成 0~9 之间的随机数, 传递100 就生成 0~99 随机数.
+
+~def main()~ 函数从文本文件中抓取一行.
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 22:53:44
+[[file:输入源/screenshot_2018-08-16_22-53-44.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 22:56:37
+[[file:输入源/screenshot_2018-08-16_22-56-37.png]]
+
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 22:57:47
+[[file:输入源/screenshot_2018-08-16_22-57-47.png]]
+
+** (基本输入源)RDD队列流
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 22:58:38
+[[file:输入源/screenshot_2018-08-16_22-58-38.png]]
+
+
+~print()~ 是打印给程序员我们自己看.
+
+[[file:输入源/screenshot_2018-08-16_22-59-13.png]]
+
+
+下面我们创建 RDD 然后加入 RDD队列
+
+[[file:输入源/screenshot_2018-08-16_23-03-22.png]]
+
+#+BEGIN_EXAMPLE
+
+range 1 to 100      range 1 to 100      range 1 to 100      range 1 to 100
+\------------/      \------------/      \------------/      \------------/
+      |
+      v
+     RDD
+      |
+      | .map(r=>(r%10, 1)).reduceByKey(_+_)
+      v
+     RDD
+      |
+      | .print
+#+END_EXAMPLE
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 23:14:29
+[[file:输入源/screenshot_2018-08-16_23-14-29.png]]
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 23:14:49
+[[file:输入源/screenshot_2018-08-16_23-14-49.png]]
+
+** (高级输入源)使用 Kafka 作为数据源(安装和准备)
+*** Kafka 介绍
+Kafka 叫做分布式发布订阅消息系统, 实际上就是个 *高阶数据源* *数据交换枢纽* ,在做
+*数据收集* *数据发送SparkStreaming* 的工作 --- 很多地方有数据源,他们产生数据,
+kafka 收集这些数据发送给 SparkStreaming, 其他功能也包括批量离线处理.
+
+Kafka 相当于 Java 的作用, 我们不跟底层 OS 打交道, 把他交给 JVM 的开发者, 我们不
+论在任何系统上运行 Java app 都使用相同的一套接口. Kafka 与此类似, 他为处理逻辑提
+供了多种数据源的访问和获取方式, 只向上提供给Kafka 使用数据源交互接口即可, 向下的
+部分交给 Kafka 的开发者去做.
+
+#+BEGIN_EXAMPLE
+DataSource                         Computing Framework
+
++-+
++-+  -----+
+          |                 +----- SparkStreaming
++-+       |                 |
++-+  -----+----- kafka -----+----- MapReduce
+          |
++-+       |
++-+  -----+
+#+END_EXAMPLE
+
+
+[[file:输入源/screenshot_2018-08-16_23-17-07.png]]
+
+
+[[file:输入源/screenshot_2018-08-16_23-30-23.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 23:30:54
+[[file:输入源/screenshot_2018-08-16_23-30-54.png]]
+
+每一个应用想去消费某个消息, 都是消费某一个 ~Topic~ ,所以我们使用 Kafka 时进行消
+息发送的时候都睡设置一个 Topic, Topic 有点像是消息队列的感觉, 消息生产者产生的这
+类 topic都扔到这个 topic 下, 消息消费者想消费某个主题的消息, 就去对象主题下去取
+消息.
+
+~Producer~ 负责发布消息到 boker.
+
+~Consumer Group~ 每个消费这都属于某个组别.
+
+
+*** Kafka 安装和准备工作
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 23:35:23
+[[file:输入源/screenshot_2018-08-16_23-35-23.png]]
+
+
+
+[[file:输入源/screenshot_2018-08-16_23-35-34.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 23:35:46
+[[file:输入源/screenshot_2018-08-16_23-35-46.png]]
+
+首先用 zookeeper 配置文件启动 zookeeper 服务.
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 23:37:02
+[[file:输入源/screenshot_2018-08-16_23-37-02.png]]
+
+*** Spark 准备工作
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 23:37:22
+[[file:输入源/screenshot_2018-08-16_23-37-22.png]]
+
+
+
+
+
+
+
+
+
+
+
+** (高级输入源)使用 Kafka 作为数据源(编程方法)
+
+*** 配置kafka, 编写生产者
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 23:39:51
+[[file:输入源/screenshot_2018-08-16_23-39-51.png]]
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 23:40:08
+[[file:输入源/screenshot_2018-08-16_23-40-08.png]]
+
+~// Zookeeper connection properties~ 都是固定写法,
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 23:44:04
+[[file:输入源/screenshot_2018-08-16_23-44-04.png]]
+
+~val message = new ProducerRecord[String, String](topic, null, str)~ 这条语句在
+做的事情就是说, 我数据源产生消息了,然后我要扔给 Kafka, 扔什么, 就必须扔
+~ProducerRecord~ 对象, 构建这个对象需要三个参数: ~topic~, ~key~, ~value~, key 在
+这里的实例里没有意义, 设置为 null. 而后通过 ~producer.send()~ 方法扔给 kafka.
+
+
+*** 编写消费者
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 23:52:34
+[[file:输入源/screenshot_2018-08-16_23-52-34.png]]
+
+
+
+[[file:输入源/screenshot_2018-08-16_23-53-01.png]]
+
+~setStreamingLogLevels()~ 没有这条语句, 你是看不到打印信息的,这个而必须有.
+
+
+
+下面编写你的消费者要消费 *哪些* topics, 因为消费者可能 *订阅* 了多种 topic.
+
+~val topics= "wordsender"~ 这个 topics 如果有多个, 必须在字符串内用 "~,~" 隔开:
+~val topics= "wordsender1,wordsender2,wordsender3"~
+
+~createStream(ssc, zkQuorum, group, topicMap)~ 中的 ~topicMap~ 必须是 *map* 类型
+数据(所以要 ~.toMap~), 且要求 *topic 作为 key*, *分区数作为 value*. 必须是这样的
+形式.
+
+#+BEGIN_EXAMPLE
+~createStream(ssc,          zkQuorum,               group,    topicMap)~
+              ---           --------                -----     --------
+              |                |                      |            |
+     SparkStreamingContext  zookeeper 服务器地址  topic 所在组   topic 参数(如上讨论)
+#+END_EXAMPLE
+
+这样就创建好了一个流数据输入源头. 这个对象就像我们的一个代理, 负责去消费 kafka
+中的消息.
+
+[[file:输入源/screenshot_2018-08-16_23-54-37.png]]
+
+之前说过, 我们产生的数据都是 (null, value) 的形式, 那么我们取出来的时候, 也必须
+按照这种 tuple 的形式去解析.
+
+~reduceByKeyAndWindow()~ 做的事情是把窗口范围内的数据, 都进行 reduceByKey 操作
+
+~ssc.awaitTermination~ 的意思是等待一些终止命令把他终止掉.
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 00:12:18
+[[file:输入源/screenshot_2018-08-17_00-12-18.png]]
+
+[[file:输入源/screenshot_2018-08-17_00-11-52.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 00:12:45
+[[file:输入源/screenshot_2018-08-17_00-12-45.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 00:13:45
+[[file:输入源/screenshot_2018-08-17_00-13-45.png]]
+
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 00:13:53
+[[file:输入源/screenshot_2018-08-17_00-13-53.png]]
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 00:14:44
+[[file:输入源/screenshot_2018-08-17_00-14-44.png]]
+** (高级输入源)使用 Flume 作为数据源
+* 转换操作
+** DStream 无状态转换操作
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 00:15:25
+[[file:转换操作/screenshot_2018-08-17_00-15-25.png]]
+
+Dstream 操作中尤其要注意 ~reduce~ 操作, 他reduce 时候返回的是一个 *包含单元素
+RDD* 的新DStream.
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 00:17:48
+[[file:转换操作/screenshot_2018-08-17_00-17-48.png]]
+
+
+
+[[file:转换操作/screenshot_2018-08-17_00-18-57.png]]
+
+他只知道当前统计的效果,无法累加, 不记录历史累计效果.
+
+
+** DStream 有状态转换操作
+
+*** 滑动窗口转换操作
+[[file:转换操作/screenshot_2018-08-17_00-20-31.png]]
+
+
+   滑动窗口用的很多
+[[file:转换操作/screenshot_2018-08-17_00-20-07.png]]
+
+
+
+[[file:转换操作/screenshot_2018-08-17_00-21-29.png]]
+
+我有一个窗口, 每隔 2 秒钟移动一次, 每次移动都会框住一段, 没次都对我框住的这么一
+段做处理.
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 00:22:59
+[[file:转换操作/screenshot_2018-08-17_00-22-59.png]]
+
+~window(widownLenght, slideInterval)~ : 1st-para 是窗口大小, 2nd-para 是滑动间隔.
+经过这个函数之后, 原来一大串 DStream 就变成了一小段一小段的 Dstream.
+
+
+reduceByKeyAndWindow(): 会让窗口内的具有相同key 的 RDD(必须是 (K,V) 形式), 通过
+1st-para 指明的 function 聚合起来.
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 00:28:31
+[[file:转换操作/screenshot_2018-08-17_00-28-31.png]]
+
+比上次多了一个 ~invFunc~ 函数, invFunc 是前面 ~func~ 的一种逆运算. 这个逆运算就
+是为了帮助我们完成 *高效的词频统计*.
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 00:29:17
+[[file:转换操作/screenshot_2018-08-17_00-29-17.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 00:30:00
+[[file:转换操作/screenshot_2018-08-17_00-30-00.png]]
+
+#+BEGIN_EXAMPLE
+        出去的     复用的      进来的
+
+       /-------\ /----------\ /-------\
+      +---------+------------+---------+
+      | 1 + 2   | 3 + 4 + 5  | 6 + 7   |
+      +---------+------------+---------+
+          3           12
+tn-1   \--------------------/
+         3+12=15 by func:_+_
+               |
+               v
+               |
+tn-1'    15-3=12 by invFunc:_+_   ======> 这里结果 12 得到复用,不用
+                                          再次计算 3+4+5 了.
+                      12         13
+tn               \--------------------/
+                    12+13 by func:_+_
+
+#+END_EXAMPLE
+
+
+
+*** updateStateByKey
+不断把历史和当前进行累加, 这个历史就是状态(state)
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 01:01:37
+[[file:转换操作/screenshot_2018-08-17_01-01-37.png]]
+
+
+
+#+BEGIN_EXAMPLE
+val updateFunc = (values:Seq[Int], state:Option[Int]) => {xxxxx}
+                           ^              ^
+这里存放的是我们的同一个单词              这里存放的是我当前单词的历史统计次数(状态),
+的本轮出现次数组成的 seq                  由变量 ~previousCount=state.getOrElse(0)~
+eg (1,1,1,,1,1,1)                         获取, 再与当前统计数,由变量 ~val currentCount=
+                                          values.foldLeft(0)(_+_)~ 获取, 当前+历史统计数
+                                          作为这个函数最后的返回值, 封装在 ~some()~ 中.
+#+END_EXAMPLE
+
+[[file:转换操作/screenshot_2018-08-17_01-02-46.png]]
+
+这个状态更新函数很重要.
+
+
+[[file:转换操作/screenshot_2018-08-17_01-03-08.png]]
+
+~wordDStream~ 已经生成, 下面这个代码很重要: ~val stateDstream =
+wordDstream.updateStateByKey[Int](updateFunc)~ 把之前定义的状态更新函数传进去.
+
+updateStateByKey 的本质还是 accumulated by key(here is by word), 额外还要做的事
+情是利用 accumulated result 值, 基于 updateFunc 函数更新 state, state 中存储的是
+过往统计过的历史信息.
+
+要求 updateFunc 函数只能有两个参数, 1st-para 必须是Seq类型, 值由
+updateStateByKey 函数来提供:
+
+#+BEGIN_EXAMPLE
+assume that, we get the input data is:
+"he was here, she was here, I am here."
+                                                                 ...........
+                                                     old  state: .(john, 3).
+                                           (history accumulated) .(was,  5). --------------------------+
+                                                                 .(here, 9). -----------------------------+
+                                                                 ...........                           |  |
+                                                                        | null:                        |  |
+  .map(x=>(x,1))       .ByKey              seq: (1)                     | no records with              |  |
+  ---------->          --------->    +------------------------------+   | "he" as key                  |  |
+                                     |                              v   v                              |  |
+he            (he   ,1)          (he   ,1)              updateFunc(___, ___) ====> new state=some(1+0) |  |
+                                                                                                       |  |
+was           (was  ,1)          (she  ,1)              updateFunc(___, ___) ====> new state=some(1+0) |  |
+                                                                                                       |  |
+here          (here ,1)          (I    ,1)              updateFunc(___, ___) ====> new state=some(1+0) |  |
+                                                                                                       |  |
+she           (she  ,1)          (am   ,1)              updateFunc(___, ___) ====> new state=some(1+0) |  |
+                                                                                                       |  |
+                                           seq: (1, 1)                  +------------------------------+  |
+                                     +------------------------------+   |                                 |
+                                     |                              v   v                                 |
+was           (was  ,1)          (was  ,1)              updateFunc(___, ___) ====> new state=some(2+5)    |
+                                                                                                          |
+here          (here ,1)          (was  ,1)                                                                |
+                                                                                                          |
+                                                                                                          |
+                                                                                                          |
+                                           seq: (1, 1, 1)               +---------------------------------+
+                                     +------------------------------+   |
+                                     |                              v   v
+I             (I    ,1)          (here ,1)              updateFunc(___, ___)  ====> new state=some(3+9)
+
+am            (am   ,1)          (here ,1)
+
+here          (here ,1)          (here ,1)
+
+
+                                                                 ............
+                                                       new state:.(john, 3) .
+                                                                 .(was,  7) .
+                                                                 .(here, 12).
+                                                                 .(he   ,1) .
+                                                                 .(she  ,1) .
+                                                                 .(I    ,1) .
+                                                                 .(am   ,1) .
+                                                                 ............
+#+END_EXAMPLE
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 02:41:44
+[[file:转换操作/screenshot_2018-08-17_02-41-44.png]]
+
+
+
+* 输出操作
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 02:42:09
+[[file:输出操作/screenshot_2018-08-17_02-42-09.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 02:43:43
+[[file:输出操作/screenshot_2018-08-17_02-43-43.png]]
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 02:44:04
+[[file:输出操作/screenshot_2018-08-17_02-44-04.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 02:44:38
+[[file:输出操作/screenshot_2018-08-17_02-44-38.png]]
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 02:44:55
+[[file:输出操作/screenshot_2018-08-17_02-44-55.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 02:45:04
+[[file:输出操作/screenshot_2018-08-17_02-45-04.png]]
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 02:45:13
+[[file:输出操作/screenshot_2018-08-17_02-45-13.png]]
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 02:45:40
+[[file:输出操作/screenshot_2018-08-17_02-45-40.png]]
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 02:45:56
+[[file:输出操作/screenshot_2018-08-17_02-45-56.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 02:46:02
+[[file:输出操作/screenshot_2018-08-17_02-46-02.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 02:46:12
+[[file:输出操作/screenshot_2018-08-17_02-46-12.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 02:46:47
+[[file:输出操作/screenshot_2018-08-17_02-46-47.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-17 02:46:58
+[[file:输出操作/screenshot_2018-08-17_02-46-58.png]]
+
+注意:
+#+BEGIN_SRC scala
+  val repartionedRDD = rdd.repartition(3)
+  repartionedRDD.foreachPartition(func)
+#+END_SRC
+
+repartionedRDD 里面的每个分区的数据都写进 MySSQL 中,怎么做呢, 通过 func 函数.
+
+#+BEGIN_EXAMPLE
+def func(records: Iterator[(String,Int)])
+                             ^      ^
+                   迭代器   单词  出现次数
+#+END_EXAMPLE

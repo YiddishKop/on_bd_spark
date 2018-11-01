@@ -1,0 +1,472 @@
+# -*- org-export-babel-evaluate: nil -*-
+#+PROPERTY: header-args :eval never-export
+#+PROPERTY: header-args:python :session 1.4 大数据关键技术
+#+PROPERTY: header-args:ipython :session 1.4 大数据关键技术
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="/home/yiddi/git_repos/YIDDI_org_export_theme/theme/org-nav-theme_cache.css" >
+#+OPTIONS: html-link-use-abs-url:nil html-postamble:nil html-preamble:t
+#+OPTIONS: H:3 num:t ^:nil _:nil tags:not-in-toc
+#+TITLE: 第一章 大数据技术概述
+#+AUTHOR: yiddishkop
+#+EMAIL: [[mailto:yiddishkop@163.com][yiddi's email]]
+#+TAGS: {PKGIMPT(i) DATAVIEW(v) DATAPREP(p) GRAPHBUILD(b) GRAPHCOMPT(c)} LINAGAPI(a) PROBAPI(b) MATHFORM(f) MLALGO(m)
+
+
+#+BEGIN_EXPORT html
+<nav id='navbar'>
+<div class='container'>
+<ul>
+<li><a href='https://yiddishkop.github.io/'>Home</a></li>
+<li><a href='https://yiddishkop.github.io/DataScience.html'>DataScience</a></li>
+<li><a href='https://yiddishkop.github.io/DataScience.html'>Math</a></li>
+<li><a href='https://yiddishkop.github.io/Life.html'>Life</a></li>
+<li><a href='https://yiddishkop.github.io/PaperWriting.html'>PaperWriting</a></li>
+<li><a href='https://yiddishkop.github.io/Other.html'>Archive</a></li>
+<li><a href='https://yiddishkop.github.io/About/resume_about.html'>About</a></li>
+</ul>
+</div>
+</nav>
+<br>
+<br>
+<br>
+<br>
+#+END_EXPORT
+
+* 大数据核心技术
+** 背景
+#+caption:
+#+name:
+#+attr_html: :width 100px
+#+ATTR_HTML: :style float:left;margin:0px 15px 40px 40px;
+#+attr_latex: :width 100px
+[[file:screenshot_2018-08-13_21-31-29.png]]
+
+这四个步骤贯穿每一个大数据应用, 谈到大数据也基本就是这四种技术:
+1. 数据采集
+2. 数据存储与管理
+3. 数据处理与分析
+4. 数据隐私与安全
+
+
+但其中对全世界影响最大甚至可以直接代替"大数据技术"这五个字的就是: "*分布式存储*"
+和 "*分布式处理*". 最令人艳羡的是, 两者基本都出自 *google*.
+
+
+#+caption:
+#+name:
+#+attr_html: :width 100px
+#+ATTR_HTML: :style float:left;margin:0px 15px 40px 40px;
+#+attr_latex: :width 100px
+[[file:screenshot_2018-08-13_21-39-46.png]]
+
+** 分布式存储: 解决海量数据的存储问题
+
+ #+caption:
+ #+name:
+ #+attr_html: :width 100px
+ #+ATTR_HTML: :style float:left;margin:0px 15px 40px 40px;
+ #+attr_latex: :width 100px
+ [[file:分布式存储: 解决海量数据的存储问题/screenshot_2018-08-13_21-50-31.png]]
+
+ #+caption:
+ #+name:
+ #+attr_html: :width 100px
+ #+ATTR_HTML: :style float:left;margin:0px 15px 40px 40px;
+ #+attr_latex: :width 100px
+ [[file:screenshot_2018-08-13_21-41-26.png]]
+
+ |                    | Google    | 开源      |
+ |--------------------+-----------+-----------|
+ | 分布式文件系统     | GFS       | HDFS      |
+ | 分布式数据库       | BigTable  | HBase     |
+ | 分布式并行处理技术 | MapReduce | MapReduce |
+
+ 非关系型数据库:
+ 1. 键值数据库
+ 2. 列簇据库库
+ 3. 图形数据库
+ 4. 文档数据库
+
+ 传统数据库无法"*水平扩展*" : 1台 -> 两台 -> 三台.
+
+ NoSQL 数据库可以做到同时支持 *关系型数据存储* 和 *水平扩展*.
+
+** 分布式处理: 解决海量数据的处理问题
+ 复杂任务无法通过单机处理, 分成许多小 "片段" 放在不同的单机上同时处理.
+
+* 大数据计算模式
+
+不同的计算模式需要不同的产品:
+
+#+caption:
+#+name:
+#+attr_html: :width 100px
+#+ATTR_HTML: :style float:left;margin:0px 15px 40px 40px;
+#+attr_latex: :width 100px
+[[file:1.5 大数据计算模式/screenshot_2018-08-13_21-53-59.png]]
+
+
+典型的计算模式:
+1. 批处理计算 ==> MapReduce(基于磁盘, 实时性差) ==> Spark(基于内存, 实时性高)
+2. 流计算(要求实时处理,给出实时响应, eg 淘宝鼠标点击流数据) ==> Storm, S4, Flume
+3. 图计算(社交网络数据, 也可以交给 mapreduce 去做但效率太低) ==> Google Pregel, Spark GraphX
+4. 查询分析计算(100万张光盘搜寻字符串, 只需要2~3秒) ==> Google Dremel ==> Hive ==> Cassandra
+
+
+
+[[file:1.5 大数据计算模式/screenshot_2018-08-13_22-06-32.png]]
+
+
+
+* 代表性大数据技术
+** hadoop
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-14 05:24:38
+[[file:1.6 代表性大数据技术/screenshot_2018-08-14_05-24-38.png]]
+
+#+BEGIN_EXAMPLE
+外界其 --------->>>       外界数据源怎么进入                 不是所有数据都要存在文件系统中                       \
+他数据                    Hadoop 平台呢,怎么                 很多需要借助数据库来存储.形式规则                    |
+                          进入 HDFS, HBase中呢               查找方便,                                            |
+                     +--> Flume(日志收集)  ................. HBase(分布式非关系型列族数据库)                      |
+                     |                               .         ^                                                  |
+                     |    Zookeeper                  .         |                                                  |
+                     |    选择一个服务器当管家       .         |          Mahout(机器学习算法库,都是写好          |
+                     |    主服务器从服务器选择       .         |                 的MapReduce作业)                 |
+                     |      ^                        .         |            ^                                     |
+                     |      |                        .         |            |                                     |
+                     |      |                        .         |            |                                     |
+                     |      |                        .         |            |                                     |
+                     +--- hadoop           =         ....... HDFS       +   |    MapReduce                        | Ambari
+                            |                        .         |            |      / \                            > 安装,部署,管理,配置
+外界                        |                        .         |            |     /   \                           | 可视化管理
+关系系                      v                        .         |            |    /     \                          | 安装与部署
+数据库 --------->>>       sqoop                      .         |          MapReduce    YARN(计算资源调度与管理,   | 节点健康与否
+                外界关系型数据库   ...................         |                            分配多少cpu/mem给某   | 哪个节点是Server
+                与 Hadoop 平台进行                             |              ^             个MapReduce任务       | etc.
+                数据交换                                       |              |             任务调度与管理, 这个  |
+                                                               |              |             子任务应该分到哪个    |
+                                                               v              |              单机去执行)          |
+                                  (基于HDFS实现的数据仓库,   Hive ------------+                                   |
+                                   接受 SQL 语句查询)                          SQL转换成MapReduce任务             |
+                                                               ^                                                  |
+                                                               |                                                  |
+                                                               |                                                  |
+                                                               |                                                  |
+                                                               |                                                  /
+                                   数据源数据进行转换后      Pig(PigLatin)
+                                   存储到数据仓库中
+
+#+END_EXAMPLE
+
+
+
+
+* Map Reduce v1 (Classic Map Reduce)
+** 概述
+*** MapReduce 两个核心特征
+1. _*/分而治之/*_
+
+采用"*分而治之*"策略, 一个存储在HDFS中的大规模数据集会被切分成许多独立的分片
+(*split*), 这些分片可以被多个 *Map* 任务并行处理.
+
+1. _*/计算向数据靠拢/*_
+
+#+BEGIN_QUOTE
+数据在哪, 你就把任务派到哪取执行; 任务跟着数据走.
+#+END_QUOTE
+
+注意, 任务并非一定要在数据所在的机子上运行, 他按照如下顺序选择:
+1. 数据所在机子(data-local)
+2. 数据所在机子的rack内选择一个机子(rack-local)
+3. 数据所在机子的网络内选择一个机子(network)
+
+
+#+caption:
+#+name:
+#+attr_html: :width 100px
+#+ATTR_HTML: :style float:left;margin:0px 15px 40px 40px;
+#+attr_latex: :width 100px
+[[file:Map Reduce v1 (Classic Map Reduce)/screenshot_2018-08-14_08-16-48.png]]
+
+
+MapReduce 将复杂的, 运行于大规模集群上的并行计算过程高度抽象到了两个函数: Map
+and Reduce. 编程容易, 不需要掌握分布式并行编程细节, 也可以很容易把自己的程序运行
+在分布式系统上, 完成海量数据计算.
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-14 10:36:55
+[[file:Map Reduce v1 (Classic Map Reduce)/screenshot_2018-08-14_10-36-55.png]]
+
+
+*** MapReduce 的特点(也是弊端)
+依赖于 HDFS 提供的分布式存储特性, 作业进来首先进行数据分片, 按照块
+(block=64or128MB)为单位分片, 系统为每个分片单独启动一个 map 任务,然后经过 reduce
+之后输出结果到 HDFS. *_输入和输出都是放在 HDFS 上的_*.
+
+且 MapReduce 任务有严格的阶段划分, Reduce 任务必须 *_等待所有的Map任务都完成_* 之
+后才能执行.
+
+#+BEGIN_QUOTE
+正是因为这两个划线的操作非常耗时, 所以才有了 spark.
+#+END_QUOTE
+
+[[file:Map Reduce v1 (Classic Map Reduce)/screenshot_2018-08-14_10-38-54.png]]
+
+
+
+** MapReduce 详细过程
+There are *4* entities involved in classing map reduce
+
+作业 $\in$ 任务
+
+Job $\in$ Task
+
+#+BEGIN_EXAMPLE
+                                             copy job jar and other files needed from shared
+                                             cache to each tasktracker's local file system
+                                 ...............................................................................
+    TASK EXECUTION               .                                                                             .   JOB SUBMISSION
+                                 v                                                                             .
+                           working dir                                             |                           .       waitForCompletion()
+               run            and               TASK ASSIGNMENT                    |                           .        polls 1time/1second
+    ------------<--------- TaskRunner                                              |.submitJobInternal()       .
+    .        (2) Action        \                choose a guardian near             |                           .
+    .                    create \               the orphan                         |                           .
+    ^                            \                                               JobSubmitter[obj]             .
+    .                             ------------- Task Tracker------------------     |                           .
+    .                       (1) Setup                           heartbeat     \    |.submit()                  . 1.get jobId
+    .                                                                          \   |                           . 2.checks
+    .                                                      submit Job           \  |                           . 3.compute input splits        .submitJob()
+    .                                         Job client -----------------------> Job Tracker  ----------------.-------------------------------------------
+    .                                                                              |                           . 4.copy
+    .                                                                              |                           .
+    .                                                                              |                           .
+    .                                                                              |                           .
+    .              JOB INITIALIZATION                                      create  |                        ...... config <-
+    .                 +------------------------+-----------------------------------+                        .  ... job jar <-
+    .                 |                        |                                   |                     ......... computed input splits <-
+    .                 |                        |                  [obj]bookkeeping | track tasks         v  .      to dir of JobTracker
+    . Job initialization task           Job cleaup task                            |                     .  .         ----------------- shared HDFS
+    .                 |                        |                                   |                     .  .
+    .                 |                        |                  taskId           | taskId        taskId.  .
+    .           make output dir           clean up dirs               +------------+----------------+    .  . setNumReduceTasks()
+    .           or temp output            when job complete     split |       split|           split| .<..  . set==> mapred.reduce.tasks = 2
+    .           store the tasks'                                      |            |                |       .
+    .           output                                              map           map              map      .
+    .                                                                                                       . specif number of reduce task
+    .                                                                 这部分应该只是确定需要                .
+    .                                                                 多少 map 和 reduce 任务               .
+    ...............................................................   下一步把他们分配给就近的              .
+                                                                      task tracker 去执行和跟进             .
+                                                                                                         reduce
+
+
+
+
+
+
+
+
+#+END_EXAMPLE
+
+
+
+
+
+
+
+
+
+1. The *Job client* who submits the job
+2. The *Job tracker* who handels overall execution of job. It is a java
+   application with main class ~JobTracker~
+3. The *Task tracker*, who run the individual tasks. It is a java application
+   with main class ~TaskTracker~.
+4. The shared file system, provided by *HDFS*
+
+[[file:1.6 代表性大数据技术/screenshot_2018-08-14_07-36-43.png]]
+
+The following are the main phases in map reduce
+
+*** _/*Job Submission*/_
+
+The ~submit()~ method on job creates an internal instance of ~JobSubmitter~ and
+calls ~submitJobInternal()~ method on it. Having submitted the job,
+~waitForCompletion()~ polls the job’s progress once a second.
+
+On calling this method following happens.
+
+- It goes to ~JobTracker~ and gets a *jobId* for the job
+- Perform checks if the the output directory has been specified or not. If
+  specified , whether the directory already exists or is new. And throws error
+  if any such thing fails.
+- Computes input split and throws error if it fails to do so, because the input
+  paths don’t exist.
+- Copies the resources to JobTracker file system in a directory named after Job
+  Id. These resources include configuration files, job jar file,and computed
+  input splits. These are copied with high redundancy by default a factor of 10.
+- Finally it calls ~submitJob()~ method on JobTracker.
+
+*** _*/Job Initialization/*_
+
+Job tracker performs following steps
+
+- Creates bookkeeping object to track tasks and their progress
+- For each input split creates a map tasks.
+- The number of reduce tasks is defined by the configuration mapred.reduce.tasks
+  set by ~setNumReduceTasks()~.
+- Tasks are assigned taskId’s at this point.
+- In addition to this 2 other tasks are created: Job initialization task and Job
+  clean up task, these are run by tasktrackers
+- Job initialization task , based on output committed, like in case of
+  FileOutputCommitter, creates the output directory to store the tasks output as
+  well as temporary output
+- Job clean up tasks which delete the temporary directory after the job is
+  complete.
+
+*** _*/Task Assignment/*_
+
+TaskTracker sends a heartbeat to jobtracker every five seconds. This heartbeat
+serves as a communication channel, will indicate whether it is ready to run a
+new task. They also send the available slots on them.
+
+Here is how job allocation takes place.
+
+- JobTracker first selects a job to select the task from, based on job
+  scheduling algorithms.
+- The default scheduler fills empty map task before reduce task slots.
+- For a map task then it chooses a tasktracker which is in following order of
+  priority: data-local, rack-local and then network.
+- For a reduce task, it simply chooses a task tracker which has empty slots.
+- The number of slots which a task tracker has depends on number of cores.
+
+*** Task Execution
+
+Following is how a job is executed
+
+*Setup*:
+
+- TaskTracker copies the job jar file from the shared filesystem (HDFS) and any
+  files needed to run the tasks from distributed cache to TaskTracker’s local
+  file system
+- Tasktracker creates a local working directory, and un-jars the jar file into
+  the local file system
+- It then creates an instance of TaskRunner
+
+*Action*:
+
+- Tasktracker starts TaskRunner in a new JVM to run the map or reduce task.
+- Seperate process is needed so that the TaskTracker does not crash in case of
+  bug in user code or JVM.
+- The child process communicates it progress to parent process umbilical interface.
+- Each task can perform setup and cleanup actions, which are run in the same JVM
+  as the task itself, based on OutputComitter
+- In case of speculative execution the other tasks are killed before committing
+  the task output, only one of the duplicate task is committed.
+- Even if the map or reduce tasks is run via pipes or via socket as in case of
+  streaming, we provide the input via stdin and get output via stdout from the
+  running process.
+
+*** Job/Task Progress
+
+Here is how the progress is monitored of a job/task
+
+- JobClient keeps polling the JobTracker for progress.
+- Each child process reports its progress to parent task tracker.
+- If a task reports progress, it sets a flag to indicate that the status change
+  should be sent to the tasktracker.The flag is checked in a separate thread
+  every 3 seconds, and if set it notifies the tasktracker of the current task
+  status.
+- Task tracker sends its progress to JobTracker over the heartbeat for every
+  five seconds.Counters are sent less frequently, because they can be relatively
+  high-bandwidth.
+- JobTracker then assembles task progress from all task trackers and keeps a
+  holistic view of job.
+- The Job receives the latest status by polling the jobtracker every second.
+
+*** Job Completion
+
+On Job Completion the clean up task is run.
+
+- Task sends the task tracker job completion. Which in turn is sent to job
+  tracker.
+- Job Tracker then send the job completion message to client, when it polls.
+- Jobtracker cleans up its working state for the job and instructs tasktrackers
+  to do the same, It cleans up all the temporary directories.
+- This causes jobclient’s ~waitForJobToComplete()~ method to return.
+
+* YARN 框架的重要作用
+
+如果没有 YARN, *每个框架后台都有一个程序用来获取本机 CPU mem 等计算资源*, 多个框
+架 *没有相互协调的话就存在资源抢占的问题*. 这个问题会随着分布式规模越大而越严重.
+
+这样,企业就会选择 *一个框架一个集群*, 也就是每个单机只部署一种架构, 大大降低了集
+群资源利用率. 而 YARN 的目标就是实现 *一个集群多个框架* --- 所有框架需要计算资源
+都来找我要, 我来协调和统筹.
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-14 10:45:54
+[[file:Map Reduce v1 (Classic Map Reduce)/screenshot_2018-08-14_10-45-54.png]]
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-14 10:50:05
+[[file:Map Reduce v1 (Classic Map Reduce)/screenshot_2018-08-14_10-50-05.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-14 10:52:03
+[[file:Map Reduce v1 (Classic Map Reduce)/screenshot_2018-08-14_10-52-03.png]]
+
+
+
+
+* Spark
+** 概述
+  Spark 鲸吞蚕食了大量 Hadoop 的底盘, 主要是 MapReduce.
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-14 10:59:09
+[[file:Spark/screenshot_2018-08-14_10-59-09.png]]
+
+Spark 出现之前, 学习成本较高: 批处理任务, ->你要学习 MapReduce, 流数据, ->你要学
+习 Storm. Spark 的出现给所有这些 *计算任务* 一个统一的接口, 你需要学的只是
+Spark.
+
+** Hadoop 与 Spark 对比
+
+*** MR 表达能力有限
+
+Hadoop 表达能力有限, 任何任务首先需要转换成 Mapreduce 模式才能进入 Hadoop 生态进
+行运算, 这是 *入口要求*, 但仅仅是这个入口要求都未必能满足. *现实生活中不是所有的
+任务都能转换成 Mapreduce 模式*. 虽然 Mapreduce 让程序员只需要写两个(高级抽象)函
+数: map() and reduce(), 大大降低了开发难度. 这种要求(任何任务都必须先转换成 map
+和 reduce)同时也带来了 *表达能力* 的损失.
+
+Spark 不仅仅提供了 map 和 reduce 逻辑, 还提供了很多函数式编程语言的函数: filter,
+groupby 等等. Spark 表达能力比 MR 强的多.
+
+*** MR 磁盘IO开销太大
+
+
+MR 任务的入口和出口都是 HDFS, 输入数据要从 HDFS 读取, 输出数据要写入 HDFS.
+
+Spark 是基于内存的, 不与磁盘打交道.
+
+*** MR 延迟高
+
+延迟高是基于两个原因:
+1. MR 任务首先基于磁盘 IO 读写,
+2. 'R' 必须等待所有的 'M' 都完成了才能执行.
+
+
+Spark 是基于 DAG(有向无环图) 的任务调度机制, 优于 M->R 的顺序执行方式, 易于形成
+pipeline(管道) 一个任务的输出(在内存中)立即作为另一个任务的输入(spark任务就是基
+于内存的), 进一步减少磁盘IO.
+
+** 执行流程对比
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-14 11:15:12
+[[file:Spark/screenshot_2018-08-14_11-15-12.png]]
+
+* 其他框架介绍: Flink 和 Beam
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-14 11:18:56
+[[file:其他框架介绍: Flink 和 Beam/screenshot_2018-08-14_11-18-56.png]]

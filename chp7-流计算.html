@@ -1,0 +1,806 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2018-08-16 四 08:55 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>第7章, Spark Streaming</title>
+<meta name="generator" content="Org mode" />
+<meta name="author" content="yiddishkop" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="css/site.css" >
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2018 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">第7章, Spark Streaming</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#orgffc3189">流计算概述</a>
+<ul>
+<li><a href="#org93d4d3d">静态数据和流数据</a></li>
+<li><a href="#org78daac8">批量计算和实时计算</a></li>
+<li><a href="#org2c02989">流计算概念</a></li>
+<li><a href="#org1c0512f">流计算与Hadoop</a></li>
+<li><a href="#orgfa533b6">流计算框架</a></li>
+<li><a href="#org86135a1">流计算处理流程</a></li>
+</ul>
+</li>
+<li><a href="#orgc20457c">Spark Streaming 简介</a></li>
+<li><a href="#org6bdf0b4">DStream 操作概述</a></li>
+<li><a href="#org5797c9f">输入源</a>
+<ul>
+<li><a href="#org22ad49e">(基本输入源)文件流</a></li>
+<li><a href="#orgeb0bb8a">(基本输入源)套接字流</a></li>
+<li><a href="#org877ffe2">(基本输入源)RDD队列流</a></li>
+<li><a href="#org0c69572">(高级输入源)使用 Kafka 作为数据源(安装和准备)</a></li>
+<li><a href="#org32e2d66">(高级输入源)使用 Kafka 作为数据源(编程方法)</a></li>
+<li><a href="#orgf505599">(高级输入源)使用 Flume 作为数据源</a></li>
+</ul>
+</li>
+<li><a href="#orgf838efc">转换操作</a>
+<ul>
+<li><a href="#orge1519bc">DStream 无状态转换操作</a></li>
+<li><a href="#org6ec7840">DStream 有状态转换操作</a></li>
+</ul>
+</li>
+<li><a href="#org693829b">输出操作</a></li>
+</ul>
+</div>
+</div>
+<nav id='navbar'>
+<div class='container'>
+<ul>
+<li><a href='https://yiddishkop.github.io/'>Home</a></li>
+<li><a href='#'>FP</a></li>
+<li><a href='#'>DataScience</a></li>
+<li><a href='#'>Spark</a></li>
+<li><a href='#'>CS</a></li>
+<li><a href='#'>论文撰写</a></li>
+<li><a href='#'>Life</a></li>
+<li><a href='https://yiddishkop.github.io/YIDDI_reme/resume_of_webpage_cn.html'>About</a></li>
+</ul>
+</div>
+</nav>
+
+
+<div id="orgffc3189" class="outline-2">
+<h2 id="orgffc3189">流计算概述</h2>
+<div class="outline-text-2" id="text-orgffc3189">
+</div>
+<div id="org93d4d3d" class="outline-3">
+<h3 id="org93d4d3d">静态数据和流数据</h3>
+<div class="outline-text-3" id="text-org93d4d3d">
+<p>
+数据仓库(eg, Hive in Hadoop): 不断的把某些业务系统产生的数据经过抽取/转换加入数据仓库中,他是包含时间维度的&#x2014;eg.一天一次. 如此就可以去分析过去一个月每天的库存变化情况等等. 数据仓库中保留了大量的历史时间线数据, 他是静态的.
+</p>
+
+<p>
+数据库(eg, HBase in Hadoop): 数据库只是记录某一时刻的数据.
+</p>
+
+<p>
+<code>数据仓库 = time(数据库)</code> 他俩都是 <b>静态数据</b>
+</p>
+
+
+<div class="figure">
+<p><img src="流计算概述/screenshot_2018-08-16_01-16-40.png" alt="screenshot_2018-08-16_01-16-40.png" />
+</p>
+</div>
+
+
+
+<div class="figure">
+<p><img src="流计算概述/screenshot_2018-08-16_01-22-23.png" alt="screenshot_2018-08-16_01-22-23.png" />
+</p>
+</div>
+
+<p>
+电子商务网站, 根据用户点击流构建用户画像, 了解用户特征, 根据与你有相似特征的其他用户的购买行为对你进行实时推荐.
+</p>
+
+
+
+<div class="figure">
+<p><img src="流计算概述/screenshot_2018-08-16_01-27-49.png" alt="screenshot_2018-08-16_01-27-49.png" />
+</p>
+</div>
+
+<p>
+流数据有几大特点:
+</p>
+<ol class="org-ol">
+<li>源源不断, 数据量大</li>
+<li>来源多, 可以是套接字流, 可以是鼠标点击流, 可以是传感器流 etc.</li>
+<li>相邻的数据无法保证时间线顺序, 数据顺序可能是颠倒的, 先到达的是历史数据,后到达的是当前数据,</li>
+</ol>
+</div>
+</div>
+
+
+<div id="org78daac8" class="outline-3">
+<h3 id="org78daac8">批量计算和实时计算</h3>
+<div class="outline-text-3" id="text-org78daac8">
+
+<div class="figure">
+<p><img src="流计算概述/screenshot_2018-08-16_01-30-31.png" alt="screenshot_2018-08-16_01-30-31.png" />
+</p>
+</div>
+
+
+<div class="figure">
+<p><img src="流计算概述/screenshot_2018-08-16_01-30-43.png" alt="screenshot_2018-08-16_01-30-43.png" />
+</p>
+</div>
+</div>
+</div>
+
+
+<div id="org2c02989" class="outline-3">
+<h3 id="org2c02989">流计算概念</h3>
+<div class="outline-text-3" id="text-org2c02989">
+
+<div class="figure">
+<p><img src="流计算概述/screenshot_2018-08-16_01-31-18.png" alt="screenshot_2018-08-16_01-31-18.png" />
+</p>
+</div>
+
+
+<p>
+<b>流数据的价值是随着时间推移逐渐降低的</b>.
+</p>
+
+
+<div class="figure">
+<p><img src="流计算概述/screenshot_2018-08-16_01-31-30.png" alt="screenshot_2018-08-16_01-31-30.png" />
+</p>
+</div>
+</div>
+</div>
+
+<div id="org1c0512f" class="outline-3">
+<h3 id="org1c0512f">流计算与Hadoop</h3>
+<div class="outline-text-3" id="text-org1c0512f">
+
+<div class="figure">
+<p><img src="流计算概述/screenshot_2018-08-16_01-33-07.png" alt="screenshot_2018-08-16_01-33-07.png" />
+</p>
+</div>
+
+
+
+<div class="figure">
+<p><img src="流计算概述/screenshot_2018-08-16_01-34-06.png" alt="screenshot_2018-08-16_01-34-06.png" />
+</p>
+</div>
+
+
+<p>
+用批处理的模式模拟流处理: <b>把流数据切成一个个小片段, 每一个小片段用批处理模式处理</b>. Spark 就是这种方式取处理流数据的.
+</p>
+
+<pre class="example">
+
+            批处理批处理批处理
+            /----\/----\/----\/----\/----\/----\/----\/----\/----\/----\/----\/----\/----\
+流数据:     ------------------------------------------------------------------------------&gt;
+时间线
+</pre>
+
+
+<div class="figure">
+<p><img src="流计算概述/screenshot_2018-08-16_01-34-17.png" alt="screenshot_2018-08-16_01-34-17.png" />
+</p>
+</div>
+
+
+
+<div class="figure">
+<p><img src="流计算概述/screenshot_2018-08-16_01-37-12.png" alt="screenshot_2018-08-16_01-37-12.png" />
+</p>
+</div>
+</div>
+</div>
+
+
+
+
+
+<div id="orgfa533b6" class="outline-3">
+<h3 id="orgfa533b6">流计算框架</h3>
+<div class="outline-text-3" id="text-orgfa533b6">
+
+<div class="figure">
+<p><img src="流计算概述/screenshot_2018-08-16_01-37-55.png" alt="screenshot_2018-08-16_01-37-55.png" />
+</p>
+</div>
+
+
+
+<div class="figure">
+<p><img src="流计算概述/screenshot_2018-08-16_01-38-03.png" alt="screenshot_2018-08-16_01-38-03.png" />
+</p>
+</div>
+
+
+
+
+<div class="figure">
+<p><img src="流计算概述/screenshot_2018-08-16_01-38-10.png" alt="screenshot_2018-08-16_01-38-10.png" />
+</p>
+</div>
+
+
+
+
+<div class="figure">
+<p><img src="流计算概述/screenshot_2018-08-16_01-38-30.png" alt="screenshot_2018-08-16_01-38-30.png" />
+</p>
+</div>
+</div>
+</div>
+
+
+
+
+
+
+<div id="org86135a1" class="outline-3">
+<h3 id="org86135a1">流计算处理流程</h3>
+<div class="outline-text-3" id="text-org86135a1">
+
+<div class="figure">
+<p><img src="流计算概述/screenshot_2018-08-16_01-38-54.png" alt="screenshot_2018-08-16_01-38-54.png" />
+</p>
+</div>
+
+
+
+<div class="figure">
+<p><img src="流计算概述/screenshot_2018-08-16_01-39-02.png" alt="screenshot_2018-08-16_01-39-02.png" />
+</p>
+</div>
+
+
+
+<div class="figure">
+<p><img src="流计算概述/screenshot_2018-08-16_01-39-24.png" alt="screenshot_2018-08-16_01-39-24.png" />
+</p>
+</div>
+
+
+<div class="figure">
+<p><img src="流计算概述/screenshot_2018-08-16_01-39-40.png" alt="screenshot_2018-08-16_01-39-40.png" />
+</p>
+</div>
+
+
+
+
+<div class="figure">
+<p><img src="流计算概述/screenshot_2018-08-16_01-40-00.png" alt="screenshot_2018-08-16_01-40-00.png" />
+</p>
+</div>
+
+
+
+
+<div class="figure">
+<p><img src="流计算概述/screenshot_2018-08-16_01-40-13.png" alt="screenshot_2018-08-16_01-40-13.png" />
+</p>
+</div>
+
+
+
+<div class="figure">
+<p><img src="流计算概述/screenshot_2018-08-16_01-40-55.png" alt="screenshot_2018-08-16_01-40-55.png" />
+</p>
+</div>
+
+
+<p>
+应用程序一直驻留在工作节点, 数据一来就处理, 处理完就往外扔.
+</p>
+
+
+<p>
+并非等待用户发起查询, 而是得到结果就主动推送给用户.
+</p>
+
+
+<div class="figure">
+<p><img src="流计算概述/screenshot_2018-08-16_01-41-47.png" alt="screenshot_2018-08-16_01-41-47.png" />
+</p>
+</div>
+
+
+
+
+<div class="figure">
+<p><img src="流计算概述/screenshot_2018-08-16_01-42-36.png" alt="screenshot_2018-08-16_01-42-36.png" />
+</p>
+</div>
+</div>
+</div>
+</div>
+
+
+
+
+<div id="orgc20457c" class="outline-2">
+<h2 id="orgc20457c">Spark Streaming 简介</h2>
+<div class="outline-text-2" id="text-orgc20457c">
+
+<div class="figure">
+<p><img src="Spark Streaming 简介/screenshot_2018-08-16_08-08-58.png" alt="screenshot_2018-08-16_08-08-58.png" />
+</p>
+</div>
+
+
+<div class="figure">
+<p><img src="Spark Streaming 简介/screenshot_2018-08-16_08-09-34.png" alt="screenshot_2018-08-16_08-09-34.png" />
+</p>
+</div>
+
+<p>
+<b>原始数据 1 秒切一次, 每切一次生成一个 RDD</b>.
+</p>
+
+
+<div class="figure">
+<p><img src="Spark Streaming 简介/screenshot_2018-08-16_08-10-16.png" alt="screenshot_2018-08-16_08-10-16.png" />
+</p>
+</div>
+
+
+
+<div class="figure">
+<p><img src="Spark Streaming 简介/screenshot_2018-08-16_08-16-32.png" alt="screenshot_2018-08-16_08-16-32.png" />
+</p>
+</div>
+
+<p>
+DStream 的本质就是 RDD 序列, 他不是像 DataFrame 有自己的结构.
+</p>
+
+
+
+<div class="figure">
+<p><img src="Spark Streaming 简介/screenshot_2018-08-16_08-18-59.png" alt="screenshot_2018-08-16_08-18-59.png" />
+</p>
+</div>
+
+
+
+<div class="figure">
+<p><img src="Spark Streaming 简介/screenshot_2018-08-16_08-19-26.png" alt="screenshot_2018-08-16_08-19-26.png" />
+</p>
+</div>
+
+
+
+
+<div class="figure">
+<p><img src="Spark Streaming 简介/screenshot_2018-08-16_08-19-53.png" alt="screenshot_2018-08-16_08-19-53.png" />
+</p>
+</div>
+
+<p>
+Spark 只是通过 批处理 来模拟 流处理, 它本身并不具备像 Storm 一样毫秒级别的响应速度, 但是 Spark Streaming 有其自身的优点: <b>同时兼容批处理和流处理</b> , 你能够在
+Spark的 <b>小批处理窗口内, 把其他历史数据融合进来</b>, 很好的应用于 <b>需要历史数据和实时数据联合分析</b> 的特定应用场合.
+</p>
+</div>
+</div>
+
+
+<div id="org6bdf0b4" class="outline-2">
+<h2 id="org6bdf0b4">DStream 操作概述</h2>
+<div class="outline-text-2" id="text-org6bdf0b4">
+
+<div class="figure">
+<p><img src="DStream 操作概述/screenshot_2018-08-16_08-23-26.png" alt="screenshot_2018-08-16_08-23-26.png" />
+</p>
+</div>
+
+
+<pre class="example">
+普通 Spark 架构: app -&gt; Driver -&gt; sparkContext -&gt; worker -&gt; Executor &lt;- task
+</pre>
+
+<div class="figure">
+<p><img src="DStream 操作概述/screenshot_2018-08-16_08-23-36.png" alt="screenshot_2018-08-16_08-23-36.png" />
+</p>
+</div>
+
+
+<p>
+当做流处理的时候, 你必须有一个监听程序一直跑在某个 Executor 上, 一个无休无止的
+task. 这样的task 就叫做 <b>Receiver</b>. 他会一直接受某个数据源(eg, Kafka)送来的数据,
+并进行相关的处理, 这个"处理"的逻辑就是我们编写的程序, 一般应用都会设置多个
+<b>Receiver</b> 每个 Receiver 负责一个 input DStream.
+</p>
+
+
+<div class="figure">
+<p><img src="DStream 操作概述/screenshot_2018-08-16_08-24-30.png" alt="screenshot_2018-08-16_08-24-30.png" />
+</p>
+</div>
+
+
+
+
+<div class="figure">
+<p><img src="DStream 操作概述/screenshot_2018-08-16_08-29-04.png" alt="screenshot_2018-08-16_08-29-04.png" />
+</p>
+</div>
+
+
+
+<div class="figure">
+<p><img src="DStream 操作概述/screenshot_2018-08-16_08-30-04.png" alt="screenshot_2018-08-16_08-30-04.png" />
+</p>
+</div>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<tbody>
+<tr>
+<td class="org-left">Spark</td>
+<td class="org-left">Spark SQL</td>
+<td class="org-left">Spark Streaming</td>
+</tr>
+
+<tr>
+<td class="org-left">RDD</td>
+<td class="org-left">DataFrame</td>
+<td class="org-left">StreamingContext</td>
+</tr>
+
+<tr>
+<td class="org-left">SparkContext</td>
+<td class="org-left">SparkSession</td>
+<td class="org-left">StreamingContext</td>
+</tr>
+</tbody>
+</table>
+
+<p>
+<span class="underline">在SparkShell中</span>:
+</p>
+
+<p>
+可以从 SparkContext 对象来创建 StreamingContext 对象:
+</p>
+<pre class="example">
+                          指明多长对数据流时间切分一次
+                     --  ---------
+new StreamingContext(sc, Seconds(1))
+</pre>
+
+<p>
+<span class="underline">不在SparkShell中</span>: 通过 SparkConf 对象生成 StreamingContext 对象.
+</p>
+
+
+<div class="figure">
+<p><img src="DStream 操作概述/screenshot_2018-08-16_08-38-32.png" alt="screenshot_2018-08-16_08-38-32.png" />
+</p>
+</div>
+
+<pre class="example">
+1. val conf = new SparkConf().setAppName().setMaster
+   ------------------------------------------------
+                         |
+                         |
+                         |
+                         |
+                         v
+2. new StreamingContext(conf, Seconds(1))
+
+</pre>
+</div>
+</div>
+
+
+<div id="org5797c9f" class="outline-2">
+<h2 id="org5797c9f">输入源</h2>
+<div class="outline-text-2" id="text-org5797c9f">
+</div>
+<div id="org22ad49e" class="outline-3">
+<h3 id="org22ad49e">(基本输入源)文件流</h3>
+<div class="outline-text-3" id="text-org22ad49e">
+<p>
+对某一个目录下的文件实时监控, 只要有新的文件写到该目录, 就会把他的内容抓出来扔到Streaming去处理. eg, 比如日志文件. 在实时监控之前, 历史上已经有的文件不会进行任何捕捉. 他只捕捉动态变化的文件.
+</p>
+
+
+
+<div class="figure">
+<p><img src="输入源/screenshot_2018-08-16_08-49-33.png" alt="screenshot_2018-08-16_08-49-33.png" />
+</p>
+</div>
+
+
+
+
+<div class="figure">
+<p><img src="输入源/screenshot_2018-08-16_08-50-21.png" alt="screenshot_2018-08-16_08-50-21.png" />
+</p>
+</div>
+
+
+<p>
+<code>ssc.textFileStream("path/DirName")</code> 生成一个文件数据流, 根据StreamingContext配置的切断时间(<code>Seconts(num)</code>)进行切分. 其切分结果就是 RDD(with mutliple lines as
+item inside), 注意这时候对多行String切成单词 <del>就不能用 map</del> , 必须使用 flatMap.
+</p>
+</div>
+</div>
+
+
+<div id="orgeb0bb8a" class="outline-3">
+<h3 id="orgeb0bb8a">(基本输入源)套接字流</h3>
+</div>
+<div id="org877ffe2" class="outline-3">
+<h3 id="org877ffe2">(基本输入源)RDD队列流</h3>
+</div>
+<div id="org0c69572" class="outline-3">
+<h3 id="org0c69572">(高级输入源)使用 Kafka 作为数据源(安装和准备)</h3>
+</div>
+<div id="org32e2d66" class="outline-3">
+<h3 id="org32e2d66">(高级输入源)使用 Kafka 作为数据源(编程方法)</h3>
+</div>
+<div id="orgf505599" class="outline-3">
+<h3 id="orgf505599">(高级输入源)使用 Flume 作为数据源</h3>
+</div>
+</div>
+<div id="orgf838efc" class="outline-2">
+<h2 id="orgf838efc">转换操作</h2>
+<div class="outline-text-2" id="text-orgf838efc">
+</div>
+<div id="orge1519bc" class="outline-3">
+<h3 id="orge1519bc">DStream 无状态转换操作</h3>
+</div>
+<div id="org6ec7840" class="outline-3">
+<h3 id="org6ec7840">DStream 有状态转换操作</h3>
+</div>
+</div>
+<div id="org693829b" class="outline-2">
+<h2 id="org693829b">输出操作</h2>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="author">Author: yiddishkop (<a href="mailto:yiddishkop@163.com">yiddishkop@163.com</a>)</p>
+<p class="date">Date: </p>
+<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 26.1 (<a href="https://orgmode.org">Org</a> mode 9.1.13)</p>
+<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>

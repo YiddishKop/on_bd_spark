@@ -1,0 +1,415 @@
+# -*- org-export-babel-evaluate: nil -*-
+#+PROPERTY: header-args :eval never-export
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="css/site.css" >
+#+OPTIONS: html-link-use-abs-url:nil html-postamble:t html-preamble:t
+#+OPTIONS: H:3 num:nil ^:nil _:nil tags:not-in-toc
+#+TITLE: SparkSQL
+#+AUTHOR: yiddishkop
+#+EMAIL: yiddishkop@163.com
+
+#+BEGIN_EXPORT html
+<nav id='navbar'>
+<div class='container'>
+<ul>
+<li><a href='https://yiddishkop.github.io/'>Home</a></li>
+<li><a href='#'>FP</a></li>
+<li><a href='#'>DataScience</a></li>
+<li><a href='#'>Spark</a></li>
+<li><a href='#'>CS</a></li>
+<li><a href='#'>论文撰写</a></li>
+<li><a href='#'>Life</a></li>
+<li><a href='https://yiddishkop.github.io/YIDDI_reme/resume_of_webpage_cn.html'>About</a></li>
+</ul>
+</div>
+</nav>
+#+END_EXPORT
+
+* SparkSQL简介
+** SparkSQL->Shark->Hive
+
+- Hive: SQL on Hadoop, convert SQL to MapReduce job
+- Shark: SQL on Spark, convert SQL to Spark job
+
+[[file:SparkSQL简介/screenshot_2018-08-15_21-45-15.png]]
+
+
+[[file:SparkSQL简介/screenshot_2018-08-15_21-45-25.png]]
+
+
+[[file:SparkSQL简介/screenshot_2018-08-15_21-47-49.png]]
+
+
+[[file:SparkSQL简介/screenshot_2018-08-15_21-50-36.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 21:51:20
+[[file:SparkSQL简介/screenshot_2018-08-15_21-51-20.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 21:52:01
+[[file:SparkSQL简介/screenshot_2018-08-15_21-52-01.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 21:52:54
+[[file:SparkSQL简介/screenshot_2018-08-15_21-52-54.png]]
+
+~Catalyst~ 是SparkSQL中非常非常核心的优化引擎,
+#+BEGIN_EXAMPLE
+AST(abstranct syntax tree) ----Catalyst-----> 物理查询计划并优化
+#+END_EXAMPLE
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 21:55:29
+[[file:SparkSQL简介/screenshot_2018-08-15_21-55-29.png]]
+
+DataFrame 支持 *结构化数据* 加载, 支持 *多种数据源*: HDFS/HIVE/JSON, etc
+
+[[file:SparkSQL简介/screenshot_2018-08-15_21-58-32.png]]
+
+[注]: 结构化数据 == 关系型数据
+
+原来的关系型数据库只能 *保存结构化数据* + *简单的分析查询*
+
+SparkSQL 填补了一个空白: *传统关系型查询* + *复杂的分析算法*
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 22:01:57
+[[file:SparkSQL简介/screenshot_2018-08-15_22-01-57.png]]
+* DataFrame与RDD区别
+
+原来的 RDD 是不具备 *结构化处理能力* 的, DataFrame 具备结构化数据处理能力.
+
+[[file:DataFrame与RDD区别/screenshot_2018-08-15_22-04-50.png]]
+
+
+RDD 的本质就是 *Java对象集合*, 内部结构信息是被 *OO 封装的*, 想获取内部结构信息,
+就需要先对 object 进行解析. 这个过程是非常低效的.
+
+DataFrame 本身提供了更多结构化信息, 大概可以理解为 *已经高效解析过的RDD*. 所以他
+具备处理结构化数据的能力.
+
+[[file:DataFrame与RDD区别/screenshot_2018-08-15_22-06-37.png]]
+
+* DataFrame的创建
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 22:12:17
+[[file:DataFrame的创建/screenshot_2018-08-15_22-12-17.png]]
+
+
+#+BEGIN_EXAMPLE
+                      |.read.json()              |.select()/filter()
+Hive  \               |                          |
+       \              |                          |
+HDFS  - SparkSession ---------------> DataFrame -------> DataFrame
+       /
+local /
+
+                      |.textFile()               |.map()/groupBy()/drop()/
+Hive  \               |.makeRDD()                |
+       \              |.parallize()              |
+HDFS  - SparkContext ---------------> RDD       -------> RDD
+       /
+local /
+
+#+END_EXAMPLE
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 22:15:21
+[[file:DataFrame的创建/screenshot_2018-08-15_22-15-21.png]]
+
+
+获得 DataFrame 三个必要条件:
+1. ~import org.apache.spark.sql.SparkSession~
+1. ~SparkSession.builder().getOrCreate()~
+2. ~import spark.implicits._~
+
+[[file:DataFrame的创建/screenshot_2018-08-15_22-15-46.png]]
+
+
+常用连击操作:
+1. ~df.printSchema()~ // visualize the column name and type
+2. ~df.select(df("name"), df("age")+1).show()~ // select 语句中默认可以使用函数直接批量操作一个 column 的值
+3. ~df.filter(df("age")>20).show()~ // 根据某个 column 值过滤, 过滤结仍然按行显示
+
+
+[[file:DataFrame的创建/screenshot_2018-08-15_22-28-47.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 22:35:47
+[[file:DataFrame的创建/screenshot_2018-08-15_22-35-47.png]]
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 22:36:52
+[[file:DataFrame的创建/screenshot_2018-08-15_22-36-52.png]]
+
+* 从RDD转换得到DataFrame
+
+#+BEGIN_EXAMPLE
+                      |.read.json()              |.select()/filter()
+Hive  \               |                          |.show()
+       \              |                          |
+HDFS  - SparkSession ---------------> DataFrame -------> DataFrame  <--------------+
+       /                              | ^   |                                      |
+local /                               | |   |.createOrReplaceTempView("people")    |
+                                      | |   |                                      |
+                                      | |   +----------------> TempView            |
+                           .map()     | |                          |               |
+                                      | |                          v               |
+                                      | |           [session].sql("SQL clause") ---+
+                                      | |
+                                      | |.toDF()
+                                      | |
+                                      | |
+                                      | |map(_ => Person)
+                                      | |
+                                      | |
+                                      | |case class Person
+                                      | |
+                                      | |
+                      |.textFile()    | |         |.map()/groupBy()/drop()/
+Hive  \               |.makeRDD()     | |         |
+       \              |.parallize()   v |         |
+HDFS  - SparkContext ---------------> RDD       -------> RDD
+       /
+local /
+
+#+END_EXAMPLE
+
+[[file:从RDD转换得到DataFrame/screenshot_2018-08-15_22-37-49.png]]
+
+** 反射机制推断RDD模式
+
+[[file:从RDD转换得到DataFrame/screenshot_2018-08-15_22-38-56.png]]
+
+如何把 RDD 的结构化信息告诉 SparkSQl: case class.
+
+
+[[file:从RDD转换得到DataFrame/screenshot_2018-08-15_22-41-26.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 22:41:40
+[[file:从RDD转换得到DataFrame/screenshot_2018-08-15_22-41-40.png]]
+
+
+
+[[file:从RDD转换得到DataFrame/screenshot_2018-08-15_22-45-00.png]]
+
+
+
+[[file:从RDD转换得到DataFrame/screenshot_2018-08-15_22-45-31.png]]
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 22:47:06
+[[file:从RDD转换得到DataFrame/screenshot_2018-08-15_22-47-06.png]]
+
+
+[[file:从RDD转换得到DataFrame/screenshot_2018-08-15_23-05-53.png]]
+** 使用编程方式定义RDD模式
+
+
+*** 制作 "表头"
+使用反射机制推断RDD模式, 有一个前提是你知道具体字段, 可以通过各种可视化方法来达
+此目的. 如果事先实在没有任何办法获知具体字段结构,怎么办,本节方法就是为此设计.
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 23:50:24
+[[file:从RDD转换得到DataFrame/screenshot_2018-08-15_23-50-24.png]]
+
+~import org.apache.spark.sql.types~ 可以为你生成一个关系模式的对象.
+
+~import org.apahce.spark.sql.Row~ 导入 Row, 因为需要读取一行一行数据,然后做匹配
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 23:52:07
+[[file:从RDD转换得到DataFrame/screenshot_2018-08-15_23-52-07.png]]
+
+
+这里模式字符串(~schemaString~), 我们是直接赋值, 一般企业里应用都是从其他模块中传
+递过来.
+
+[[file:从RDD转换得到DataFrame/screenshot_2018-08-15_23-52-33.png]]
+
+将 ~schemaString~ 通过 ~split()~ 方法切分成数组: array of ~fieldName~
+
+[[file:从RDD转换得到DataFrame/screenshot_2018-08-15_23-54-05.png]]
+
+对 ~数组~ 做 ~map~ , 数组每一个元素(~fieldName~)映射成一个 ~StructField~ 对象,
+每一个 StructField 就表示一个字段(column)的元信息(~字段名,字段类型,字段可空~),
+于是我们生成了一个 ~array of StructField~
+
+[[file:从RDD转换得到DataFrame/screenshot_2018-08-15_23-54-24.png]]
+
+把 StructField 与 RDD 模式挂接起来: 通过 ~StructType(array of StructField)~ 函数
+构建一个 StructType 对象, *StructType 也就是 RDD 模式*.
+
+- StructField 可以理解为 *字段(row)的元信息*,
+- StructType 可以理解为 *表(table)的元信息*.
+
+[[file:从RDD转换得到 DataFrame/screenshot_2018-08-15_23-59-58.png]]
+
+
+*** 制作 "表值"
+下面我们要对 RDD 进行解析, RDD 每一行生成一个 ~Row~ 对象, 把 ~RDD(with string
+line as item inside)~ 通过 map 映射成 ~RDD(with array of words as item inside)~
+
+[[file:从RDD转换得到DataFrame/screenshot_2018-08-16_00-13-25.png]]
+
+
+[[file:从RDD转换得到DataFrame/screenshot_2018-08-16_00-13-44.png]]
+
+
+将 ~RDD(with array of words as item inside)~ 通过 map 映射成为 ~RDD(with Row
+object as item inside)~
+
+[[file:从RDD转换得到DataFrame/screenshot_2018-08-16_00-16-24.png]]
+
+
+*** "表头" 与 "表值" 拼接
+通过 ~spark.createDataFrame(RDDofRow, StructType)~ 实现数据与表元信息的对接, 生
+成 DataFrame.
+
+[[file:从RDD转换得到DataFrame/screenshot_2018-08-16_00-18-41.png]]
+
+
+*** 生成临时表实现SQl语句查询并格式化输出
+下面就是建立临时表(TempView), 进行 SQL 查询, 然后进行格式化输出.
+
+[[file:从RDD转换得到DataFrame/screenshot_2018-08-16_00-20-25.png]]
+
+
+
+
+* 读取和保存数据
+** RDD 保存成文件
+~df.write.format("csv").save("path/name")~
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 00:25:57
+[[file:读取和保存数据/screenshot_2018-08-16_00-25-57.png]]
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 00:27:10
+[[file:读取和保存数据/screenshot_2018-08-16_00-27-10.png]]
+
+
+~df.rdd.saveAsTextFile("path/name")~
+[[file:读取和保存数据/screenshot_2018-08-16_00-28-16.png]]
+** 读写 Parquet
+
+   Parquet 是一种通用的列式存储格式.
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 00:30:11
+[[file:读取和保存数据/screenshot_2018-08-16_00-30-11.png]]
+
+
+~spark.read.parquet("path/name")~ 导入的 implicits 包会自动把 ~.parquet~ 转换成
+DataFrame.
+
+[[file:读取和保存数据/screenshot_2018-08-16_00-31-52.png]]
+
+
+通过 TempView 来转换成临时表, 然后直接使用进行 SQL 语句进行操作.
+
+[[file:读取和保存数据/screenshot_2018-08-16_00-32-56.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 00:33:22
+[[file:读取和保存数据/screenshot_2018-08-16_00-33-22.png]]
+
+** 通过 JDBC 连接数据库
+*** 准备工作
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 00:37:40
+[[file:读取和保存数据/screenshot_2018-08-16_00-37-40.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 00:37:55
+[[file:读取和保存数据/screenshot_2018-08-16_00-37-55.png]]
+
+启动 spark-submit 时, 一定要加上 JDBC驱动包路径, 这样才能够连接 MySQL.
+
+[[file:读取和保存数据/screenshot_2018-08-16_00-38-39.png]]
+
+
+
+
+
+
+
+*** 读取MySQL数据库中的数据
+    ~spark.read.format("jdbc").option("url".......)~
+
+[[file:读取和保存数据/screenshot_2018-08-16_00-46-58.png]]
+
+*** 向MySQL数据库中写入数据
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 00:48:19
+[[file:读取和保存数据/screenshot_2018-08-16_00-48-19.png]]
+
+写入数据的方式与之前的本地模式是一样的:
+1. 表头制作
+2. 表值制作
+3. 对接表头和表值,生成DF,执行插入.
+4. 建临时表用SQL语句操作
+
+[[file:读取和保存数据/screenshot_2018-08-16_00-48-08.png]]
+
+#+caption: 生成表值
+#+BEGIN_EXAMPLE
+array of string line
+
+textFile
+---> RDD(with string line as item inside) ---
+
+map
+---> RDD(with array of words as item inside) ---
+
+map
+---> RDD(with Row object as item inside)
+#+END_EXAMPLE
+
+#+caption: 生成表头
+#+BEGIN_EXAMPLE
+// 多个字段元信息                                         // 生成表元信息
+StructField() --+                                           StructType(   )
+StructField() --+                                                       ^
+StructField() --+--------- list of StructFields ------------------------+
+StructField() --+
+StructField() --+
+#+END_EXAMPLE
+
+#+caption: 挂接表头和表值
+#+BEGIN_EXAMPLE
+createDataFrame(表头, 表值) ===> DataFrame object
+#+END_EXAMPLE
+
+
+[[file:读取和保存数据/screenshot_2018-08-16_00-50-34.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 01:01:30
+[[file:读取和保存数据/screenshot_2018-08-16_01-01-30.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 01:01:45
+[[file:读取和保存数据/screenshot_2018-08-16_01-01-45.png]]
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 01:03:21
+[[file:读取和保存数据/screenshot_2018-08-16_01-03-21.png]]
+
+
+上面其实都是差不多的, 关键在于你生成 DF 之后该怎么插入到 MySQL 中.
+1. 生成 ~Properties.put~ 对象用于输入并存储你要连接的 JDBC 相关的属性,用户名密码等.
+2. ~df_with_insert_content_inside.write.mode("append").jdbc("数据库地址", "要插
+   入的表名", properties连接信息)~ 确定写入模式(追加,覆写.etc), 并使用与写入HDFS
+   相同的函数写入数据库
+
+
+[[file:读取和保存数据/screenshot_2018-08-16_01-06-07.png]]
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-16 01:11:53
+[[file:读取和保存数据/screenshot_2018-08-16_01-11-53.png]]

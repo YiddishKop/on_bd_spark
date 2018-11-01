@@ -1,0 +1,1008 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2018-08-17 五 21:37 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Spark MLlib</title>
+<meta name="generator" content="Org mode" />
+<meta name="author" content="yiddishkop" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="/home/yiddi/git_repos/YIDDI_org_export_theme/theme/org-nav-theme_cache.css" >
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2018 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Spark MLlib</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#org40b374f">1. Spark MLlib 简介</a></li>
+<li><a href="#orgb625483">2. 机器学习工作流</a>
+<ul>
+<li><a href="#org7718e55">2.1. 工作流简介</a></li>
+<li><a href="#orga4dd072">2.2. 工作流实例</a></li>
+</ul>
+</li>
+<li><a href="#orgb925449">3. 特征抽取,转化,选择</a>
+<ul>
+<li><a href="#org3f39bbe">3.1. IF-IDF</a></li>
+<li><a href="#org96c7ee6">3.2. word2vec</a></li>
+<li><a href="#org41f9b2d">3.3. CountVectorizer</a></li>
+</ul>
+</li>
+<li><a href="#org4a5d4de">4. 分类与回归</a>
+<ul>
+<li><a href="#org82af987">4.1. logistic regression 分类器</a></li>
+<li><a href="#org5b8aa69">4.2. 决策树分类器</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<nav id='navbar'>
+<div class='container'>
+<ul>
+<li><a href='https://yiddishkop.github.io/'>Home</a></li>
+<li><a href='#'>FP</a></li>
+<li><a href='#'>DataScience</a></li>
+<li><a href='#'>Spark</a></li>
+<li><a href='#'>CS</a></li>
+<li><a href='#'>论文撰写</a></li>
+<li><a href='#'>Life</a></li>
+<li><a href='https://yiddishkop.github.io/YIDDI_reme/resume_of_webpage_cn.html'>About</a></li>
+</ul>
+</div>
+</nav>
+
+
+
+
+<div class="figure">
+<p><img src="screenshot_2018-08-17_02-59-14.png" alt="screenshot_2018-08-17_02-59-14.png" />
+</p>
+</div>
+
+<div id="org40b374f" class="outline-2">
+<h2 id="org40b374f"><span class="section-number-2">1</span> Spark MLlib 简介</h2>
+<div class="outline-text-2" id="text-1">
+
+<div class="figure">
+<p><img src="Spark MLlib 简介/screenshot_2018-08-17_03-00-19.png" alt="screenshot_2018-08-17_03-00-19.png" />
+</p>
+</div>
+
+
+
+<div class="figure">
+<p><img src="Spark MLlib 简介/screenshot_2018-08-17_03-04-38.png" alt="screenshot_2018-08-17_03-04-38.png" />
+</p>
+</div>
+
+
+
+<div class="figure">
+<p><img src="Spark MLlib 简介/screenshot_2018-08-17_03-06-44.png" alt="screenshot_2018-08-17_03-06-44.png" />
+</p>
+</div>
+
+
+
+<div class="figure">
+<p><img src="Spark MLlib 简介/screenshot_2018-08-17_03-07-49.png" alt="screenshot_2018-08-17_03-07-49.png" />
+</p>
+</div>
+
+
+
+<div class="figure">
+<p><img src="Spark MLlib 简介/screenshot_2018-08-17_03-08-24.png" alt="screenshot_2018-08-17_03-08-24.png" />
+</p>
+</div>
+
+
+
+<div class="figure">
+<p><img src="Spark MLlib 简介/screenshot_2018-08-17_03-09-58.png" alt="screenshot_2018-08-17_03-09-58.png" />
+</p>
+</div>
+</div>
+</div>
+
+<div id="orgb625483" class="outline-2">
+<h2 id="orgb625483"><span class="section-number-2">2</span> 机器学习工作流</h2>
+<div class="outline-text-2" id="text-2">
+</div>
+<div id="org7718e55" class="outline-3">
+<h3 id="org7718e55"><span class="section-number-3">2.1</span> 工作流简介</h3>
+<div class="outline-text-3" id="text-2-1">
+
+<div class="figure">
+<p><img src="机器学习工作流/screenshot_2018-08-17_03-10-23.png" alt="screenshot_2018-08-17_03-10-23.png" />
+</p>
+</div>
+
+
+
+<div class="figure">
+<p><img src="机器学习工作流/screenshot_2018-08-17_03-10-38.png" alt="screenshot_2018-08-17_03-10-38.png" />
+</p>
+</div>
+
+<p>
+整个 Spark 机器学习库就是针对 DataFrame 进行一次又一次的转换.
+</p>
+
+<pre class="example">
+DataFrame-1                     DataFrame-2
+
+| data | true label |           | data | pred label| true label |
+|------+------------|   =====&gt;  |------+-----------+------------|
+| x    |          1 |           | x    |         0 |          1 |
+| y    |          0 |           | y    |         0 |          0 |
+| z    |          0 |           | z    |         1 |          0 |
+
+</pre>
+
+
+
+<div class="figure">
+<p><img src="机器学习工作流/screenshot_2018-08-17_03-15-12.png" alt="screenshot_2018-08-17_03-15-12.png" />
+</p>
+</div>
+
+
+<pre class="example">
+                      训练数据集                    测试数据集(without pred labels)
+                          |                              |
+                          |                              |
+                          |                              |
+                     fit( v )                 transform( v )
+              算法 -----------------&gt; 模型 ------------------&gt; 测试数据集(with pred labels)
+                ^                      ^
+            Estimator               Transformer
+       随机森林, 回归,etc
+
+
+</pre>
+
+
+
+
+<div class="figure">
+<p><img src="机器学习工作流/screenshot_2018-08-17_03-19-20.png" alt="screenshot_2018-08-17_03-19-20.png" />
+</p>
+</div>
+
+<p>
+Estimator, 就可以理解为一个 <b>算法</b>, 调用点 <code>fit()</code>
+</p>
+
+
+
+<div class="figure">
+<p><img src="机器学习工作流/screenshot_2018-08-17_03-22-58.png" alt="screenshot_2018-08-17_03-22-58.png" />
+</p>
+</div>
+
+
+
+<div class="figure">
+<p><img src="机器学习工作流/screenshot_2018-08-17_03-23-20.png" alt="screenshot_2018-08-17_03-23-20.png" />
+</p>
+</div>
+
+<p>
+<code>Pipeline.fit()</code> -&#x2014;&gt; Pipeline Model
+</p>
+
+
+
+<div class="figure">
+<p><img src="机器学习工作流/screenshot_2018-08-17_03-24-43.png" alt="screenshot_2018-08-17_03-24-43.png" />
+</p>
+</div>
+
+<p>
+蓝色是 Estimator(各种模型), 红色是 Transformer(各种算法)
+</p>
+
+
+
+<div class="figure">
+<p><img src="机器学习工作流/screenshot_2018-08-17_03-27-03.png" alt="screenshot_2018-08-17_03-27-03.png" />
+</p>
+</div>
+</div>
+</div>
+
+
+<div id="orga4dd072" class="outline-3">
+<h3 id="orga4dd072"><span class="section-number-3">2.2</span> 工作流实例</h3>
+<div class="outline-text-3" id="text-2-2">
+
+<div class="figure">
+<p><img src="机器学习工作流/screenshot_2018-08-17_03-28-11.png" alt="screenshot_2018-08-17_03-28-11.png" />
+</p>
+</div>
+
+
+
+<div class="figure">
+<p><img src="机器学习工作流/screenshot_2018-08-17_03-29-03.png" alt="screenshot_2018-08-17_03-29-03.png" />
+</p>
+</div>
+
+
+
+
+<div class="figure">
+<p><img src="机器学习工作流/screenshot_2018-08-17_03-29-39.png" alt="screenshot_2018-08-17_03-29-39.png" />
+</p>
+</div>
+
+<p>
+构建训练数据集DataFrame.
+</p>
+
+<pre class="example">
+sparkSession.createDataFrame( 训练集:seq of vectorized sample ) // 创建无字段名 DataFrame
+            .toDF( 字段名 ) //创建带字段名的 DataFraem.
+</pre>
+
+
+
+<div class="figure">
+<p><img src="机器学习工作流/screenshot_2018-08-17_03-33-09.png" alt="screenshot_2018-08-17_03-33-09.png" />
+</p>
+</div>
+
+<ol class="org-ol">
+<li>Tokenizer():
+
+<ul class="org-ul">
+<li>setInputCol("要做tokenize的列名")</li>
+
+<li>setOutputCol("做完tokenize后输出的列名")</li>
+</ul></li>
+
+<li>hashingTF: 把单词映射为向量
+
+<ul class="org-ul">
+<li>setNumFeatures("hash桶数量,词袋中单词书目")</li>
+
+<li>setInputCol("要做tokenize的列名")</li>
+
+<li>setOutputCol("做完tokenize后输出的列名")</li>
+</ul></li>
+
+<li>LogisticRegression():
+
+<ul class="org-ul">
+<li>setMaxIter(最大循环次数)</li>
+
+<li>setRegParam(0.01)</li>
+</ul></li>
+</ol>
+
+
+
+
+<div class="figure">
+<p><img src="机器学习工作流/screenshot_2018-08-17_03-37-38.png" alt="screenshot_2018-08-17_03-37-38.png" />
+</p>
+</div>
+
+<p>
+整个 Pipeline 还没有 fit 数据时, 是一个 Estimator, fit 数据之后就变成了一个
+Transformer. 可以进行数据预测(transform).
+</p>
+
+<pre class="example">
+
+Estimator  -----.fit---&gt; Transformer ---.transform---&gt;
+
+</pre>
+
+
+
+<div class="figure">
+<p><img src="机器学习工作流/screenshot_2018-08-17_03-41-46.png" alt="screenshot_2018-08-17_03-41-46.png" />
+</p>
+</div>
+
+<p>
+注意,这里 Seq里面是一个个的元组 tuple, 如果不是 tuple 需要调用
+<code>seq(xxx).map(Tuple1.apply)</code> 进行转换, 成为 seq of tuples, one sample one tuple,
+之后才能够通过 <code>.toDF</code> 转换成 DataFrame.
+</p>
+
+
+
+
+
+<div class="figure">
+<p><img src="机器学习工作流/screenshot_2018-08-17_03-42-11.png" alt="screenshot_2018-08-17_03-42-11.png" />
+</p>
+</div>
+
+
+<pre class="example">
+model.transform(test).select("id", "text", "prob", "pred") // DataFrame可以直接使用类SQL语句的
+                     .collect()                            // 收集到本地
+                     .foreach{
+                               case Row(id:Long, text:String, prob:Vector, pre:Double):
+                                    print(s"($id, $text)--&gt;prob=$prob, pred=$pred")
+                             } // 每个 transformer 产生的都是 Row 集合, 我们从中匹配解析出对应数据
+</pre>
+
+<p>
+Tokenizer 和 hashingTF 本身就是一个 Transformer, 所以他不需要 fit 数据就可以直接
+transfor data points.
+</p>
+</div>
+</div>
+</div>
+
+<div id="orgb925449" class="outline-2">
+<h2 id="orgb925449"><span class="section-number-2">3</span> 特征抽取,转化,选择</h2>
+<div class="outline-text-2" id="text-3">
+</div>
+<div id="org3f39bbe" class="outline-3">
+<h3 id="org3f39bbe"><span class="section-number-3">3.1</span> IF-IDF</h3>
+<div class="outline-text-3" id="text-3-1">
+<p>
+TF-IDF 方法, 用于给单词进行向量化的方法.
+</p>
+
+
+<div class="figure">
+<p><img src="特征抽取,转化,选择/screenshot_2018-08-17_03-52-59.png" alt="screenshot_2018-08-17_03-52-59.png" />
+</p>
+</div>
+
+
+
+<div class="figure">
+<p><img src="特征抽取,转化,选择/screenshot_2018-08-17_03-54-07.png" alt="screenshot_2018-08-17_03-54-07.png" />
+</p>
+</div>
+
+
+
+
+<div class="figure">
+<p><img src="特征抽取,转化,选择/screenshot_2018-08-17_03-54-15.png" alt="screenshot_2018-08-17_03-54-15.png" />
+</p>
+</div>
+
+
+
+<div class="figure">
+<p><img src="特征抽取,转化,选择/screenshot_2018-08-17_03-55-22.png" alt="screenshot_2018-08-17_03-55-22.png" />
+</p>
+</div>
+
+
+
+
+<div class="figure">
+<p><img src="特征抽取,转化,选择/screenshot_2018-08-17_03-56-11.png" alt="screenshot_2018-08-17_03-56-11.png" />
+</p>
+</div>
+
+
+
+<div class="figure">
+<p><img src="特征抽取,转化,选择/screenshot_2018-08-17_03-56-37.png" alt="screenshot_2018-08-17_03-56-37.png" />
+</p>
+</div>
+
+
+
+<div class="figure">
+<p><img src="特征抽取,转化,选择/screenshot_2018-08-17_03-58-52.png" alt="screenshot_2018-08-17_03-58-52.png" />
+</p>
+</div>
+
+<p>
+注意, 经过某些 transformer 之后, 得到的新列, 是有自己特殊格式的, 比如对于
+HashingTF 来说, 得到的新列 "rawFeatures" 的格式就是一个 3-Tuple:
+</p>
+
+<p>
+<code>(词袋数量, 向量化的句子, 该句子中每个单词的权重)</code>
+</p>
+
+<pre class="example">
+| rawFeatures                                                                             |
+|-----------------------------------------------------------------------------------------|
+| (2000,               [240, 333, 1105, 1329, 135, 1777], [1.0, 2.0, 2.0, 2.0, 1.0, 1.0]) |
+
+   ----                ---------------------------------  ------------------------------
+
+   词袋中单词数量,     向量化的句子,                      单词权重
+</pre>
+
+
+
+
+<div class="figure">
+<p><img src="特征抽取,转化,选择/screenshot_2018-08-17_04-30-42.png" alt="screenshot_2018-08-17_04-30-42.png" />
+</p>
+</div>
+
+
+
+<div class="figure">
+<p><img src="特征抽取,转化,选择/screenshot_2018-08-17_04-31-43.png" alt="screenshot_2018-08-17_04-31-43.png" />
+</p>
+</div>
+</div>
+</div>
+
+
+
+
+
+
+<div id="org96c7ee6" class="outline-3">
+<h3 id="org96c7ee6"><span class="section-number-3">3.2</span> word2vec</h3>
+<div class="outline-text-3" id="text-3-2">
+
+<div class="figure">
+<p><img src="特征抽取,转化,选择/screenshot_2018-08-17_04-33-22.png" alt="screenshot_2018-08-17_04-33-22.png" />
+</p>
+</div>
+
+
+
+<div class="figure">
+<p><img src="特征抽取,转化,选择/screenshot_2018-08-17_04-34-13.png" alt="screenshot_2018-08-17_04-34-13.png" />
+</p>
+</div>
+
+
+
+<div class="figure">
+<p><img src="特征抽取,转化,选择/screenshot_2018-08-17_04-34-26.png" alt="screenshot_2018-08-17_04-34-26.png" />
+</p>
+</div>
+
+<p>
+<code>.map(Tuple1.apply)</code>
+</p>
+
+<p>
+"Hi I heard about spank".split("") 生成的是一个数组: array("Hi", "I", "heard", xxx)
+</p>
+
+<p>
+DataFrame 需要的是一个元组 tuple, 所以调用这个方法可以把 array==&gt;tuple.
+</p>
+
+
+
+
+<div class="figure">
+<p><img src="特征抽取,转化,选择/screenshot_2018-08-17_04-39-53.png" alt="screenshot_2018-08-17_04-39-53.png" />
+</p>
+</div>
+
+<ul class="org-ul">
+<li>setInputCol</li>
+<li>setOutputCol</li>
+<li>setVectorSize(3) // Embedding 空间维度</li>
+<li>setMinCount(0)   //</li>
+</ul>
+
+
+
+
+<div class="figure">
+<p><img src="特征抽取,转化,选择/screenshot_2018-08-17_04-40-47.png" alt="screenshot_2018-08-17_04-40-47.png" />
+</p>
+</div>
+</div>
+</div>
+
+<div id="org41f9b2d" class="outline-3">
+<h3 id="org41f9b2d"><span class="section-number-3">3.3</span> CountVectorizer</h3>
+<div class="outline-text-3" id="text-3-3">
+
+<div class="figure">
+<p><img src="特征抽取,转化,选择/screenshot_2018-08-17_04-41-18.png" alt="screenshot_2018-08-17_04-41-18.png" />
+</p>
+</div>
+
+
+
+<div class="figure">
+<p><img src="特征抽取,转化,选择/screenshot_2018-08-17_04-41-31.png" alt="screenshot_2018-08-17_04-41-31.png" />
+</p>
+</div>
+
+
+
+<div class="figure">
+<p><img src="特征抽取,转化,选择/screenshot_2018-08-17_04-42-16.png" alt="screenshot_2018-08-17_04-42-16.png" />
+</p>
+</div>
+
+
+
+
+<div class="figure">
+<p><img src="特征抽取,转化,选择/screenshot_2018-08-17_04-42-33.png" alt="screenshot_2018-08-17_04-42-33.png" />
+</p>
+</div>
+
+
+
+
+<div class="figure">
+<p><img src="特征抽取,转化,选择/screenshot_2018-08-17_04-43-25.png" alt="screenshot_2018-08-17_04-43-25.png" />
+</p>
+</div>
+
+
+
+<div class="figure">
+<p><img src="特征抽取,转化,选择/screenshot_2018-08-17_04-44-01.png" alt="screenshot_2018-08-17_04-44-01.png" />
+</p>
+</div>
+
+
+
+<div class="figure">
+<p><img src="特征抽取,转化,选择/screenshot_2018-08-17_04-44-10.png" alt="screenshot_2018-08-17_04-44-10.png" />
+</p>
+</div>
+</div>
+</div>
+</div>
+
+<div id="org4a5d4de" class="outline-2">
+<h2 id="org4a5d4de"><span class="section-number-2">4</span> 分类与回归</h2>
+<div class="outline-text-2" id="text-4">
+</div>
+<div id="org82af987" class="outline-3">
+<h3 id="org82af987"><span class="section-number-3">4.1</span> logistic regression 分类器</h3>
+<div class="outline-text-3" id="text-4-1">
+
+<div class="figure">
+<p><img src="分类与回归/screenshot_2018-08-17_04-44-41.png" alt="screenshot_2018-08-17_04-44-41.png" />
+</p>
+</div>
+
+
+
+<div class="figure">
+<p><img src="分类与回归/screenshot_2018-08-17_04-44-29.png" alt="screenshot_2018-08-17_04-44-29.png" />
+</p>
+</div>
+
+
+
+<div class="figure">
+<p><img src="分类与回归/screenshot_2018-08-17_04-45-22.png" alt="screenshot_2018-08-17_04-45-22.png" />
+</p>
+</div>
+
+
+
+<div class="figure">
+<p><img src="分类与回归/screenshot_2018-08-17_04-45-36.png" alt="screenshot_2018-08-17_04-45-36.png" />
+</p>
+</div>
+
+
+
+
+<div class="figure">
+<p><img src="分类与回归/screenshot_2018-08-17_04-47-06.png" alt="screenshot_2018-08-17_04-47-06.png" />
+</p>
+</div>
+
+
+
+
+<div class="figure">
+<p><img src="分类与回归/screenshot_2018-08-17_04-47-24.png" alt="screenshot_2018-08-17_04-47-24.png" />
+</p>
+</div>
+
+
+
+<div class="figure">
+<p><img src="分类与回归/screenshot_2018-08-17_04-48-10.png" alt="screenshot_2018-08-17_04-48-10.png" />
+</p>
+</div>
+
+
+
+
+<div class="figure">
+<p><img src="分类与回归/screenshot_2018-08-17_04-49-36.png" alt="screenshot_2018-08-17_04-49-36.png" />
+</p>
+</div>
+
+
+
+<div class="figure">
+<p><img src="分类与回归/screenshot_2018-08-17_04-51-12.png" alt="screenshot_2018-08-17_04-51-12.png" />
+</p>
+</div>
+
+
+
+
+<div class="figure">
+<p><img src="分类与回归/screenshot_2018-08-17_04-52-53.png" alt="screenshot_2018-08-17_04-52-53.png" />
+</p>
+</div>
+
+
+
+<div class="figure">
+<p><img src="分类与回归/screenshot_2018-08-17_04-53-14.png" alt="screenshot_2018-08-17_04-53-14.png" />
+</p>
+</div>
+
+
+
+
+<div class="figure">
+<p><img src="分类与回归/screenshot_2018-08-17_04-54-55.png" alt="screenshot_2018-08-17_04-54-55.png" />
+</p>
+</div>
+
+
+
+
+
+<div class="figure">
+<p><img src="分类与回归/screenshot_2018-08-17_04-56-01.png" alt="screenshot_2018-08-17_04-56-01.png" />
+</p>
+</div>
+</div>
+</div>
+
+<div id="org5b8aa69" class="outline-3">
+<h3 id="org5b8aa69"><span class="section-number-3">4.2</span> 决策树分类器</h3>
+<div class="outline-text-3" id="text-4-2">
+
+<div class="figure">
+<p><img src="分类与回归/screenshot_2018-08-17_04-57-08.png" alt="screenshot_2018-08-17_04-57-08.png" />
+</p>
+</div>
+
+
+
+<div class="figure">
+<p><img src="分类与回归/screenshot_2018-08-17_04-57-45.png" alt="screenshot_2018-08-17_04-57-45.png" />
+</p>
+</div>
+
+
+
+<div class="figure">
+<p><img src="分类与回归/screenshot_2018-08-17_04-57-51.png" alt="screenshot_2018-08-17_04-57-51.png" />
+</p>
+</div>
+
+
+
+
+<div class="figure">
+<p><img src="分类与回归/screenshot_2018-08-17_04-58-20.png" alt="screenshot_2018-08-17_04-58-20.png" />
+</p>
+</div>
+
+
+
+
+<div class="figure">
+<p><img src="分类与回归/screenshot_2018-08-17_04-58-48.png" alt="screenshot_2018-08-17_04-58-48.png" />
+</p>
+</div>
+
+
+
+
+<div class="figure">
+<p><img src="分类与回归/screenshot_2018-08-17_04-58-57.png" alt="screenshot_2018-08-17_04-58-57.png" />
+</p>
+</div>
+
+
+<div class="figure">
+<p><img src="分类与回归/screenshot_2018-08-17_04-59-13.png" alt="screenshot_2018-08-17_04-59-13.png" />
+</p>
+</div>
+
+
+<div class="figure">
+<p><img src="分类与回归/screenshot_2018-08-17_04-59-03.png" alt="screenshot_2018-08-17_04-59-03.png" />
+</p>
+</div>
+
+
+
+
+
+<div class="figure">
+<p><img src="分类与回归/screenshot_2018-08-17_04-59-51.png" alt="screenshot_2018-08-17_04-59-51.png" />
+</p>
+</div>
+
+
+
+<div class="figure">
+<p><img src="分类与回归/screenshot_2018-08-17_05-00-20.png" alt="screenshot_2018-08-17_05-00-20.png" />
+</p>
+</div>
+
+
+
+<div class="figure">
+<p><img src="分类与回归/screenshot_2018-08-17_05-00-59.png" alt="screenshot_2018-08-17_05-00-59.png" />
+</p>
+</div>
+
+
+
+
+<div class="figure">
+<p><img src="分类与回归/screenshot_2018-08-17_05-01-13.png" alt="screenshot_2018-08-17_05-01-13.png" />
+</p>
+</div>
+
+
+
+
+<div class="figure">
+<p><img src="分类与回归/screenshot_2018-08-17_05-02-04.png" alt="screenshot_2018-08-17_05-02-04.png" />
+</p>
+</div>
+
+
+
+
+<div class="figure">
+<p><img src="分类与回归/screenshot_2018-08-17_05-02-39.png" alt="screenshot_2018-08-17_05-02-39.png" />
+</p>
+</div>
+
+
+
+
+
+<div class="figure">
+<p><img src="分类与回归/screenshot_2018-08-17_05-03-19.png" alt="screenshot_2018-08-17_05-03-19.png" />
+</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>

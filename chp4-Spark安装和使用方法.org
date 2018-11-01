@@ -1,0 +1,180 @@
+* 4.3 编写 Spark 独立应用程序
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 11:23:29
+[[file:4.3 编写 Spark 独立应用程序/screenshot_2018-08-15_11-23-29.png]]
+
+** 安装 sbt
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 11:25:19
+[[file:4.3 编写 Spark 独立应用程序/screenshot_2018-08-15_11-25-19.png]]
+
+~/usr/local/sbt~ 是用来存放 sbt 下载文件的, 换言之他是 sbt 安装文件
+(~sbt-launch.jar~)的下载目录, 特此说明.
+
+这一步很重要, 一定要在sbt安装目录下创建一个 .sbt 脚本文件, 文件内容如下:
+#+BEGIN_SRC shell
+  #!/bin/bash
+  SBT_OPTS="-Xms512M -Xmx1536M -Xss1M -XX:+CMSClassUnloadingEnabled
+  -XX:MaxPermSize=256M" java $SBT_OPTS -jar `dirname $0`/sbt-launch.jar "$@"
+#+END_SRC
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 11:31:20
+[[file:4.3 编写 Spark 独立应用程序/screenshot_2018-08-15_11-31-20.png]]
+
+
+
+
+** 编写 Scala 应用程序
+
+养成习惯(重要):
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 11:32:13
+[[file:4.3 编写 Spark 独立应用程序/screenshot_2018-08-15_11-32-13.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 11:32:34
+[[file:4.3 编写 Spark 独立应用程序/screenshot_2018-08-15_11-32-34.png]]
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 11:32:47
+[[file:4.3 编写 Spark 独立应用程序/screenshot_2018-08-15_11-32-47.png]]
+
+
+一定是按照 ~logFile~ => ~SparkConf~ => ~SparkContext~ => ~textFile~ 这种方式来编写整个程序.
+
+注意下面参数的意义:
+#+BEGIN_EXAMPLE
+val logData = sc.textFile(logFile,               2).cache()
+                          -------                -
+                           |                     |
+              这个是之前定义的logFile 地址      这个是你要分 split 的数量
+#+END_EXAMPLE
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 12:51:05
+[[file:4.3 编写 Spark 独立应用程序/screenshot_2018-08-15_12-51-05.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 12:51:51
+[[file:4.3 编写 Spark 独立应用程序/screenshot_2018-08-15_12-51-51.png]]
+
+
+[[file:4.3 编写 Spark 独立应用程序/screenshot_2018-08-15_12-52-10.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 12:52:44
+[[file:4.3 编写 Spark 独立应用程序/screenshot_2018-08-15_12-52-44.png]]
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 12:55:53
+[[file:4.3 编写 Spark 独立应用程序/screenshot_2018-08-15_12-55-53.png]]
+
+** 使用 sbt 打包 Scala 程序
+** 通过 spark-submit 运行
+
+
+
+* 4.4 第一个 Spark 应用程序: WordCount
+
+对于一个独立的应用程序, 你有两种方法来设置你的 ~Master~
+- 在源代码中通过 ~new SparkConf().setAppName().setMaster("xxxx")~ 中的 ~"xxxx"~
+  来进行设置
+  - ~setMaster("local[2]")~ // 表示启动 *2 个线程* + *单机执行*
+  - ~setMaster("spark://master:7077")~
+- 通过 ~spark-submit --class [.class file] --master [xxxx]~ shell 命令行
+  - xxxx = local[2] // 表示启动 *2 个线程* + *单机执行*
+  - xxxx = spark://master:7077"
+  - xxxx = yarn-cluster
+
+
+[[file:4.4 第一个 Spark 应用程序: WordCount/screenshot_2018-08-15_11-11-34.png]]
+
+
+* 4.6 Spark集群环境搭建
+
+[[file:4.6 Spark集群环境搭建/screenshot_2018-08-15_10-51-02.png]]
+
+
+[[file:4.6 Spark集群环境搭建/screenshot_2018-08-15_10-51-41.png]]
+
+'HDFS NN' ---> NameNode; 'HDFS DN' ---> DataNode
+
+| physical role | spark    | hadoop |
+|---------------+----------+--------|
+| master        | Driver   | NN     |
+| slave         | Executor | DN     |
+
+Spark 的 WorkerNode 与 HDFS 的 DataNode 部署在一起, 所以要遵循: "*计算向数据靠拢
+*", Spark 是计算框架, 不做存储, 所以一定要借助 HDFS. 所以才会这么部署.
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 11:04:44
+[[file:4.6 Spark集群环境搭建/screenshot_2018-08-15_11-04-44.png]]
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 11:04:57
+[[file:4.6 Spark集群环境搭建/screenshot_2018-08-15_11-04-57.png]]
+
+
+[[file:4.6 Spark集群环境搭建/screenshot_2018-08-15_11-05-14.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 11:06:09
+[[file:4.6 Spark集群环境搭建/screenshot_2018-08-15_11-06-09.png]]
+第三行是你本机的 IP 地址, 你现在想做主节点(master ndoe).
+
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 11:07:14
+[[file:4.6 Spark集群环境搭建/screenshot_2018-08-15_11-07-14.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 11:07:50
+[[file:4.6 Spark集群环境搭建/screenshot_2018-08-15_11-07-50.png]]
+hadoop, ~start-all.sh~ 总共启动两个东西: HDFS 和 YARN
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 11:08:41
+[[file:4.6 Spark集群环境搭建/screenshot_2018-08-15_11-08-41.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 11:09:08
+[[file:4.6 Spark集群环境搭建/screenshot_2018-08-15_11-09-08.png]]
+* 4.7 在集群上运行 Spark 应用程序
+
+** 启动Spark集群
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 10:39:02
+[[file:4.7 在集群上运行 Spark 应用程序/screenshot_2018-08-15_10-39-02.png]]
+** 采用独立集群管理器
+
+   #+BEGIN_SRC shell
+spark-submit --class <.class file> --master <spark://master:7077> <.jar ball> <parameters>
+   #+END_SRC
+
+#+BEGIN_EXAMPLE
+spark-submit --class <.class file> --master <spark://master:7077> <.jar ball> <parameters>
+#+END_EXAMPLE
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 10:40:33
+[[file:4.7 在集群上运行 Spark 应用程序/screenshot_2018-08-15_10-40-33.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 11:09:40
+[[file:4.7 在集群上运行 Spark 应用程序/screenshot_2018-08-15_11-09-40.png]]
+
+
+
+** 采用 Hadoop YARN 管理器
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 11:20:50
+[[file:4.7 在集群上运行 Spark 应用程序/screenshot_2018-08-15_11-20-50.png]]
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 11:21:45
+[[file:4.7 在集群上运行 Spark 应用程序/screenshot_2018-08-15_11-21-45.png]]
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-08-15 11:21:57
+[[file:4.7 在集群上运行 Spark 应用程序/screenshot_2018-08-15_11-21-57.png]]
