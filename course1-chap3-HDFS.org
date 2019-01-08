@@ -1,0 +1,280 @@
+#+TITLE: 第三章 分布式文件系统HDFS
+
+* 3.1 分布式文件系统
+** 3.1.1	计算机集群结构
+** 3.1.2	分布式文件系统的结构
+
+* 3.2 HDFS简介
+  总体而言，HDFS要实现以下目标：
+- 兼容廉价的硬件设备
+- 流数据读写
+- 大数据集
+- 简单的文件模型
+- 强大的跨平台兼容性
+
+HDFS特殊的设计，在实现上述优良特性的同时，也使得自身具有一些应用 *局限性* ，主要包括以下几个方面：
+
+- 不适合低延迟数据访问
+
+传统文件系统的数据读写，是以‘块’为单位进行。HDFS文件系统读写，是‘全部数据一股
+脑’读取， *不是以块为单位的* 。他不会去访问整个文件的一个子集.
+
+HDFS 不具备实时性的处理需求(顺序读写); HBASE 具备实时性的处理需求(随机读写)
+
+- 无法高效存储大量小文件
+
+为什么呢HDFS不适合存储·「大量」小文件？
+
+HDFS 的NameNode中存储的是元数据，也就是一些文件信息以及文件的存储位置（DataNode）。
+这些元数据是以 *映射表* 的方式被放在 NameNode 的内存中。方便快速查找。
+但是如果文件很小，而且非常多，那么这个映射表就会非常庞大。 *搜索/查找效率会越来越低* 。
+
+- 不支持多用户写入及任意修改文件
+
+
+
+简单的文件模型： 用简化版的文件模型来换取大量文件读写的功能， *只允许增加不允许
+修改* 。就是这个文件一旦关闭，是不可以修改的。
+
+
+* 3.3 HDFS相关概念
+** 3.3.1 块
+HDFS默认一个块64MB，一个文件被分成多个块，以块作为存储单位块的大小远远大于普通文
+件系统，可以 *最小化寻址开销* HDFS采用抽象的块概念可以带来以下几个明显的好处：
+
+-  支持大规模文件存储：文件以块为单位进行存储，一个大规模文件可以被分拆成若干个
+  文件块，不同的文件块可以被分发到不同的节点上，因此，一个文件的大小不会受到单个
+  节点的存储容量的限制，可以远远大于网络中任意节点的存储容量
+-  简化系统设计：首先，大大简化了存储管理，因为文件块大小是固定的，这样就可以很
+  容易计算出一个节点可以存储多少文件块；其次，方便了元数据的管理，元数据不需要和
+  文件块一起存储，可以由其他系统负责管理元数据
+-  适合数据备份：每个 *文件块* 都可以冗余存储到多个节点上，大大提高了系统的容错性和
+  可用性
+
+普通磁盘为了降低硬盘的寻址开销，都设计成以·「块」为单位存储。
+
+HDFS 的设计思想也是如此，只不过是·「更大的块」：
+1. HDFS 是三级寻址：datanode 的文件目录，datanode的块，文件 ---》 如果块太小，寻
+   址开销太大。
+2. HDFS 的块大小同时受到 MapReduce 的制约，如果块太大就导致一次作业只有一两个
+   MapReduce任务在执行，这样完全浪费了 MapReduce 并行的优点。
+
+** 3.3.2 名称节点和数据节点
+
+
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-11-02 22:23:50
+[[file:3.3 HDFS相关概念/screenshot_2018-11-02_22-23-50.png]]
+
+HDFS 元数据中包含：
+1. 文件是什么             File.txt
+2. 文件被分成多少块       BLK A,B,C
+3. 每个文件块被放到哪三个 DataNode 中
+
+数据节点最终是保存到其本地的 *linux 文件系统* 中去的。每个数据节点的数据是保存在
+本地文件系统中的.
+
+
+*NameNode = FsImage + EditLog*
+
+在HDFS中，名称节点（ *NameNode* ）负责管理分布式文件系统的命名空间（ *Namespace*
+），保存了两个核心的数据结构，即 ~FsImage~ 和 ~EditLog~.
+- ~FsImage~ 用于维护文件系统树以及文件树中所有的文件和文件夹的元数据操作日志文件
+
+- ~EditLog~ 中记录了所有针对文件的创建、删除、重命名等操作
+
+名称节点记录了每个文件中各个块所在的数据节点的位置信息.
+#+DOWNLOADED: /tmp/screenshot.png @ 2018-11-02 22:29:02
+[[file:3.3 HDFS相关概念/screenshot_2018-11-02_22-29-02.png]]
+
+
+*什么是 FsImage*
+
+~FsImage~ 文件包含文件系统中 *所有目录和文件inode* 的 *序列化* 形式。每个inode是
+一个文件或目录的元数据的内部表示，对于文件包含此类信息：文件的复制等级、修改和访
+问时间、访问权限、块大小以及组成文件的块; 对于目录，则存储修改时间、权限和配额元
+数据
+
+~FsImage~ 文件 *没有记录块存储在哪个数据节点* 。而是 *由名称节点把这些映射保留在
+内存* 中，当数据节点 *加入* HDFS集群时， *数据节点* 会把自己所包含的 *块列表* *
+告知* 给 *名称节点* ，此后会定期执行 *这种告知操作* ，以确保名称节点的块映射是最
+新的。
+
+*要注意*
+
+FsImage 文件当中他是没有记录 “某个块在哪个DataNode中存储的”这个 BLK 和
+DataNode 的映射 是单由内存中某块来记录，这个功能并不是由 FsImage 来实现。
+
+那这个映射是怎么构建和维护呢？
+
+当一个 DataNode 加入到集群中时，DataNode 会向 NameNode ·「汇报」我存储了哪些数据
+块。这时 NameNode 就可以构建这样一个清单，这个 BLK 和 DataNode 映射关系是通过运
+行过程中 DataNode 和 NameNode *不断的沟通* ， *实时的维护* 和更新。
+
+
+*名称节点的启动*
+
+在名称节点启动的时候，它会将FsImage文件中的内容 *加载到内存* 中，之后再 *执行
+EditLog* 文件中的 *各项操作* ，使得内存中的元数据和实际的同步，存在内存中的元数
+据支持客户端的读操作。
+
+一旦在内存中成功建立文件系统元数据的映射，则创建一个新的FsImage文件和一个空的
+EditLog文件
+
+名称节点起来之后，HDFS中的更新操作会重新写到EditLog文件中， *因为FsImage文件一般
+都很大（GB级别的很常见）* ，如果所有的更新操作都往FsImage文件中添加，这样会导致
+系统运行的十分缓慢，但是，如果往EditLog文件里面写就不会这样，因为EditLog 要小很
+多。每次执行写操作之后，且在 *向客户端发送成功代码之前* ，edits文件都需要同步更新
+
+名称节点启动（第二章命令： ~hadoop namenode -format~, ~start-all.sh~ ）他首先去
+加载 FsImage 文件中的内容到内存，然后与 EditLog 文件中的内容进行和并。
+
+FsImage 记录的是元数据的·「历史信息」
+EditLog  记录的是元数据的·「更新信息」
+
+有点类似于 git 中的 merge, 把更新的部分单独的放在 EditLog 中,不去改 FsImage.
+
+具体操作：
+1. FsImage + EditLog = 最新元数据
+2. ~FsImage.new(最新元数据)~
+3. ~EditLog.new()~
+
+
+#+BEGIN_EXAMPLE
+
+<------HDFS 的 NameNode 启动--------------------------------> <-----HDFS operations--->
+
+         +---------+
+         |         |
+磁盘     |    |    |     内存        |      磁盘                           |
+         |    |    v                 |                                     |
+FsImage -+    | new merged FsImage --+--->  new merged FsImage             | wirte in
+         |    |                      |                                     |
+EditLog -+    |                      |      new empty EdigLog    <---------+
+              |                      |
+
+#+END_EXAMPLE
+
+
+*名称节点运行期间EditLog不断变大的问题*
+
+
+在名称节点运行期间，HDFS的所有更新操作都是直接写到EditLog中，久而久之， EditLog
+文件将会变得很大.
+
+虽然这对名称节点 *运行时候是没有什么明显影响* 的，但是，当名称节点 *重启* 的时候，
+名称节点需要先将FsImage里面的所有内容映像到内存中，然后 *再一条一条地执行EditLog
+中的记录* ，当EditLog文件非常大的时候，会导致名称节点启动操作非常慢，而在这段时
+间内HDFS系统处于安全模式，一直无法对外提供写操作，影响了用户的使用.
+
+
+*如何解决？答案是：SecondaryNameNode第二名称节点*
+
+
+第二名称节点是HDFS架构中的一个组成部分，它是用来保存名称节点中对HDFS 元数据信息
+的备份，并减少名称节点重启的时间。SecondaryNameNode一般是单独运行在一台机器上.
+
+
+*Secondary NameNode 是如何工作的*
+
+SecondaryNameNode的工作情况：
+1. SecondaryNameNode会定期和NameNode通信，请求其停止使用EditLog文件，暂时将新的
+   写操作写到一个新的文件 ~edit.new~ 上来，这个操作是瞬间完成，上层写日志的函数
+   完全感觉不到差别；新来的 operation 全部写入 ~edit.new~ 文件中.
+2. SecondaryNameNode通过 ~HTTP GET~ 方式从NameNode上获取到FsImage和EditLog文件，
+   并下载到本地的相应目录下；
+3. SecondaryNameNode将下载下来的FsImage载入到内存，然后一条一条地执行EditLog文件
+   中的各项更新操作，使得内存中的FsImage保持最新；这个过程就是EditLog和FsImage文
+   件合并；
+4. SecondaryNameNode执行完（3）操作之后，会通过 ~post~ 方式将新的FsImage文件发送
+   到NameNode节点上
+5. NameNode将从SecondaryNameNode接收到的新的FsImage替换旧的FsImage文件，同时将
+   edit.new替换EditLog文件，通过这个过程EditLog就变小了
+
+
+
+
+[[file:3.3 HDFS相关概念/screenshot_2018-11-02_23-01-15.png]]
+
+
+SecondaryNameNode 有点像是 ·「副手/学徒」
+
+形象理解：
+
+当老师傅（PrimaryNameNode）无暇处理手头上的缓存下来的工作(EditLog)的时候，
+SecondaryNameNode 会每个固定的时间就去帮助老师傅处理其缓存下来的工作（FsImage +=
+EditLog）。
+
+具体理解：
+
+也就是说Hadoop 在运行时，NameNode 中的 FsImage 和 EditLog 就一直在更新，其中
+FsImage 的更新交给SecondaryNameNode 来完成，EditLog就是自己完成。
+
+#+BEGIN_SRC java
+while(time()/interval == 0):
+     PrimaryNameNode:
+          stop(EditLog)
+          new(edits.new)
+
+     SecondaryNameNode:
+          copy(FsImage)
+          copy(EditLog)
+          FsImage += EditLog
+          return FsImage
+
+      PrimaryNameNode:
+          new_FsImage = FsImage from SecondaryNameNode
+          new_EditLog = edits.new
+#+END_SRC
+
+
+*数据节点(DataNode)*
+
+数据节点是分布式文件系统 ~HDFS~ 的工作节点，负责数据的存储和读取，会根据客户端或
+者是名称节点的调度来进行数据的存储和检索，并且 *向名称节点定期发送自己所存储的块
+的列表*.
+
+每个数据节点中的 *数据会被保存在各自节点的本地Linux文件系统中*.
+
+
+* 3.4 HDFS体系结构
+* 3.5 HDFS存储原理
+* 3.6 HDFS数据读写过程
+
+*读取文件*
+
+#+BEGIN_SRC java
+  import java.io.BufferedReader;
+  import java.io.InputStreamReader;
+  import org.apache.hadoop.conf.Configuration;
+  import org.apache.hadoop.fs.FileSystem;
+  import org.apache.hadoop.fs.Path;
+  import org.apache.hadoop.fs.FSDataInputStream;
+
+  public class Chapter3{
+      public static void main(String[] args) {
+          try{
+              Configuration conf =  new Configuration(); // 声明了一个环境配置变量
+              FileSystem fs = FileSystem.get(conf); // FileSystem 是一个抽象基类
+              Path filename = new Path("hdfs://localhost:9000/user/hadoop/test.txt");
+              FSDataInputStream is = fs.open(filename); // 设置一个文件输入流并打开
+              BufferedReader d = new BufferedReader(new InputStreamReader(is)); // buffer读取对象
+              String content = d.readLine();
+              System.out.println(content);
+              d.close(); // 关闭文件
+              fs.close(); // 关闭hdfs
+          } catch (Exception e) {
+              e.printStackTrace();
+          }
+      }
+  }
+#+END_SRC
+
+写入文件
+
+#+BEGIN_SRC java
+
+
+#+END_SRC
+
+
+* 3.7 HDFS编程实践
