@@ -1,0 +1,47 @@
+
+#+BEGIN_SRC shell
+kafka-console-producer.sh --broker-list localhost:9092 --topic rep-topic
+#+END_SRC
+
+
+#+NAME: KafkaWordCountProduct.scala
+#+BEGIN_SRC scala
+  package infor.hadooptutorial.kafka.spark
+
+  import java.util.HashMap
+
+  object KafkaWordCountProduct {
+    def main(args: Array[String]) = {
+      if (args.length < 4) {
+        System.err.println("usage: kafka word count producer <metadataBrokerList><topic>" + "<messagePersec> <wordsPerMessage>")
+        System.exit(1)
+      }
+
+      val Array(brokers, topic, messagePerSec, wordsPerMessage) = args
+
+      // zookeeper connection properties
+      val props = new HashMap[String, Object]()
+
+      props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, brokers)
+      props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "org.apahce.kafka.common.serialization.StringSerializer")
+      props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apahce.kafka.common.serialization.StringSerializer")
+
+      // 构造一个 kafka 生产者对象, 并且提供 zookeeper 连接参数
+      val producer = new KafkaProducer[String, String](props)
+
+      // send some messages
+      while(true) {
+        (1 to messagesPersec.toInt).foreach {
+          messageNum =>
+          val str = (1 to wordsPerMessage.toInt).map(
+            x=>scala.util.Random.nextInt(10).toString
+          ).mkString(" ")
+
+          val message = new ProducerRecord[String, String](topic, null, "this is shiva" + str)
+
+          Thread.sleep(1000)
+        }
+      }
+    }
+  }
+#+END_SRC
